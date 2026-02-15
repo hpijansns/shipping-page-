@@ -4,123 +4,114 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard | Aarush Ayurveda</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>body { font-family: 'Poppins', sans-serif; }</style>
+    <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-gray-100">
+<body class="admin-body">
 
-    <nav class="bg-[#1b4332] text-white p-6 shadow-lg">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <h1 class="text-2xl font-bold text-[#d4af37]">Order Management</h1>
-            <a href="index.html" class="bg-white/10 px-4 py-2 rounded hover:bg-white/20 transition">Back to Store</a>
-        </div>
-    </nav>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <aside class="admin-sidebar">
+            <h2>Admin Panel</h2>
+            <nav>
+                <button onclick="showPanel('stats')"><i class="fas fa-chart-pie"></i> Overview</button>
+                <button onclick="showPanel('products')"><i class="fas fa-leaf"></i> Products</button>
+                <button onclick="showPanel('orders')"><i class="fas fa-shopping-cart"></i> Orders</button>
+                <a href="index.html" class="back-btn">View Store</a>
+            </nav>
+        </aside>
 
-    <main class="max-w-7xl mx-auto p-6 md:p-12">
-        <div class="mb-8 flex flex-col md:flex-row gap-4 justify-between items-center">
-            <h2 class="text-xl font-semibold">Customer Orders</h2>
-            <div class="relative w-full md:w-96">
-                <input type="text" id="orderSearch" onkeyup="searchOrders()" placeholder="Search by name or phone..." class="w-full p-3 pl-10 rounded-lg border focus:ring-2 focus:ring-[#1b4332] outline-none">
-                <i class="fas fa-search absolute left-3 top-4 text-gray-400"></i>
+        <!-- Main Content -->
+        <main class="admin-main">
+            <!-- Stats Panel -->
+            <div id="panel-stats" class="panel active">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3 id="stat-total-orders">0</h3>
+                        <p>Total Orders</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="stat-new-orders">0</h3>
+                        <p>New Orders</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="stat-shipped-orders">0</h3>
+                        <p>Shipped</p>
+                    </div>
+                </div>
             </div>
-        </div>
 
-        <div class="bg-white rounded-xl shadow-xl overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-                <thead class="bg-gray-50 border-b">
-                    <tr>
-                        <th class="p-4">Time</th>
-                        <th class="p-4">Customer</th>
-                        <th class="p-4">Items</th>
-                        <th class="p-4">Total</th>
-                        <th class="p-4">Status</th>
-                        <th class="p-4">Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="admin-order-body">
-                    <!-- Orders Loaded Here -->
-                </tbody>
-            </table>
-        </div>
-    </main>
+            <!-- Product Management Panel -->
+            <div id="panel-products" class="panel">
+                <div class="panel-header">
+                    <h2>Product Inventory</h2>
+                    <button class="btn-primary" onclick="toggleProductModal(true)">Add New Product</button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Image</th>
+                                <th>Name</th>
+                                <th>Price</th>
+                                <th>Stock</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-product-list"></tbody>
+                    </table>
+                </div>
+            </div>
 
+            <!-- Order Management Panel -->
+            <div id="panel-orders" class="panel">
+                <div class="panel-header">
+                    <h2>Order Management</h2>
+                    <div class="search-box">
+                        <input type="text" id="orderSearch" onkeyup="searchOrders()" placeholder="Search Name/Phone...">
+                        <button onclick="exportOrdersToCSV()" class="btn-secondary">Export CSV</button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Order Date</th>
+                                <th>Customer</th>
+                                <th>Items</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-order-list"></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Product Modal -->
+    <div id="product-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="toggleProductModal(false)">&times;</span>
+            <h2 id="product-modal-title">Add Product</h2>
+            <form id="product-form">
+                <input type="hidden" id="edit-product-id">
+                <input type="text" id="prod-name" placeholder="Product Name" required>
+                <input type="number" id="prod-price" placeholder="Price (₹)" required>
+                <input type="text" id="prod-image" placeholder="Image URL" required>
+                <textarea id="prod-desc" placeholder="Product Description" required></textarea>
+                <input type="number" id="prod-stock" placeholder="Stock Quantity" required>
+                <button type="submit" class="btn-primary w-100 mt-2">Save Product</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyBXVrbfucAyj9wud-sY2BaO2mLO8JaeeQE",
-            authDomain: "ship-53cd8.firebaseapp.com",
-            databaseURL: "https://ship-53cd8-default-rtdb.firebaseio.com",
-            projectId: "ship-53cd8",
-            storageBucket: "ship-53cd8.firebasestorage.app",
-            messagingSenderId: "682363394250",
-            appId: "1:682363394250:web:705c36de45058f4a26bc33"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-
-        function fetchOrders() {
-            db.ref('orders').on('value', snapshot => {
-                const orders = snapshot.val();
-                const tbody = document.getElementById('admin-order-body');
-                tbody.innerHTML = '';
-
-                if (orders) {
-                    Object.keys(orders).reverse().forEach(id => {
-                        const order = orders[id];
-                        const row = document.createElement('tr');
-                        row.className = "border-b hover:bg-gray-50 transition";
-                        row.innerHTML = `
-                            <td class="p-4 text-xs text-gray-500">${order.time}</td>
-                            <td class="p-4">
-                                <div class="font-bold">${order.name}</div>
-                                <div class="text-xs text-gray-500">${order.phone}</div>
-                            </td>
-                            <td class="p-4 text-xs">${order.items.map(i => `${i.name} (x${i.quantity})`).join('<br>')}</td>
-                            <td class="p-4 font-bold text-[#1b4332]">₹${order.total}</td>
-                            <td class="p-4">
-                                <select onchange="updateStatus('${id}', this.value)" class="p-2 text-xs border rounded bg-white">
-                                    <option value="New" ${order.status === 'New' ? 'selected' : ''}>New</option>
-                                    <option value="Processing" ${order.status === 'Processing' ? 'selected' : ''}>Processing</option>
-                                    <option value="Shipped" ${order.status === 'Shipped' ? 'selected' : ''}>Shipped</option>
-                                    <option value="Delivered" ${order.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
-                                    <option value="Cancelled" ${order.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
-                                </select>
-                            </td>
-                            <td class="p-4">
-                                <button onclick="deleteOrder('${id}')" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
-                            </td>
-                        `;
-                        tbody.appendChild(row);
-                    });
-                } else {
-                    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-10 text-gray-400">No orders found</td></tr>';
-                }
-            });
-        }
-
-        function updateStatus(id, status) {
-            db.ref(`orders/${id}`).update({ status });
-        }
-
-        function deleteOrder(id) {
-            if (confirm("Are you sure you want to delete this order?")) {
-                db.ref(`orders/${id}`).remove();
-            }
-        }
-
-        function searchOrders() {
-            let input = document.getElementById('orderSearch').value.toLowerCase();
-            let rows = document.querySelectorAll('#admin-order-body tr');
-            rows.forEach(row => {
-                let text = row.innerText.toLowerCase();
-                row.style.display = text.includes(input) ? '' : 'none';
-            });
-        }
-
-        fetchOrders();
-    </script>
+    <script src="admin.js"></script>
 </body>
 </html>
