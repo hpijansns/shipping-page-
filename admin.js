@@ -1,4 +1,3 @@
-// Firebase Config
 const firebaseConfig = {
     apiKey: "AIzaSyBXVrbfucAyj9wud-sY2BaO2mLO8JaeeQE",
     authDomain: "ship-53cd8.firebaseapp.com",
@@ -12,9 +11,54 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
+const ADMIN_CREDS = { mobile: "7627055204", pass: "Aarush@2025" };
+
+/**
+ * 1. LOGIN SYSTEM LOGIC
+ */
+document.getElementById('login-form').onsubmit = function(e) {
+    e.preventDefault();
+    const mobile = document.getElementById('login-mobile').value;
+    const pass = document.getElementById('login-password').value;
+    const errorMsg = document.getElementById('login-error');
+
+    if (mobile === ADMIN_CREDS.mobile && pass === ADMIN_CREDS.pass) {
+        sessionStorage.setItem('aarush_session', 'authenticated');
+        checkAuth();
+    } else {
+        errorMsg.classList.remove('hidden');
+        setTimeout(() => errorMsg.classList.add('hidden'), 3000);
+    }
+};
+
+function checkAuth() {
+    const session = sessionStorage.getItem('aarush_session');
+    if (session === 'authenticated') {
+        document.getElementById('login-view').classList.add('hidden');
+        document.getElementById('dashboard-view').classList.remove('hidden');
+        initializeDashboard();
+    } else {
+        document.getElementById('login-view').classList.remove('hidden');
+        document.getElementById('dashboard-view').classList.add('hidden');
+    }
+}
+
+function logoutAdmin() {
+    sessionStorage.removeItem('aarush_session');
+    checkAuth();
+}
+
+/**
+ * 2. INITIALIZE DASHBOARD FEATURES
+ */
 let allOrders = [];
 
-// Navigation
+function initializeDashboard() {
+    fetchOrders();
+    fetchProducts();
+}
+
+// Navigation Tabs
 function switchTab(tab) {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
@@ -22,19 +66,14 @@ function switchTab(tab) {
     document.getElementById('section-' + tab).classList.remove('hidden');
 }
 
-// ---------------- ORDER MANAGEMENT ----------------
-
+// Order Management
 function fetchOrders() {
     db.ref('orders').on('value', (snapshot) => {
         const data = snapshot.val();
         allOrders = [];
-        const rows = document.getElementById('order-rows');
-        rows.innerHTML = '';
-        
         if (data) {
             Object.keys(data).reverse().forEach(id => {
-                const order = { id, ...data[id] };
-                allOrders.push(order);
+                allOrders.push({ id, ...data[id] });
             });
             calculateStats(allOrders);
             renderOrders(allOrders);
@@ -45,12 +84,10 @@ function fetchOrders() {
 function calculateStats(orders) {
     let revenue = 0;
     let counts = { total: orders.length, New: 0, Processing: 0, Shipped: 0, Delivered: 0, Cancelled: 0 };
-
     orders.forEach(o => {
         revenue += Number(o.total || 0);
         if (counts.hasOwnProperty(o.status)) counts[o.status]++;
     });
-
     document.getElementById('s-revenue').innerText = '₹' + revenue.toLocaleString();
     document.getElementById('s-orders').innerText = counts.total;
     document.getElementById('s-new').innerText = counts.New;
@@ -64,12 +101,12 @@ function renderOrders(orders) {
     const rows = document.getElementById('order-rows');
     const query = document.getElementById('orderSearch').value.toLowerCase();
     rows.innerHTML = '';
-
     orders.filter(o => o.name.toLowerCase().includes(query) || o.phone.includes(query)).forEach(o => {
+        const shortId = (o.orderId || o.id).slice(-6);
         rows.innerHTML += `
             <tr class="hover:bg-stone-50 transition">
                 <td class="p-6">
-                    <div class="text-xs font-bold text-primary tracking-widest">${o.orderId || 'N/A'}</div>
+                    <div class="text-xs font-bold text-primary tracking-widest">#${shortId}</div>
                     <div class="text-[10px] text-stone-400 mt-1">${o.time}</div>
                 </td>
                 <td class="p-6">
@@ -77,7 +114,7 @@ function renderOrders(orders) {
                     <div class="text-[10px] text-stone-400 uppercase tracking-widest">${o.phone}</div>
                 </td>
                 <td class="p-6 text-[10px] italic">
-                    ${o.items.map(i => `${i.name} (x${i.quantity})`).join(', ')}
+                    ${Array.isArray(o.items) ? o.items.map(i => `${i.name} (x${i.quantity})`).join(', ') : o.items}
                 </td>
                 <td class="p-6 font-bold text-primary">₹${o.total}</td>
                 <td class="p-6">
@@ -97,52 +134,35 @@ function renderOrders(orders) {
                         <button onclick="deleteOrder('${o.id}')" class="text-rose-300 hover:text-rose-500 transition"><i class="fa-solid fa-trash-can"></i></button>
                     </div>
                 </td>
-            </tr>
-        `;
+            </tr>`;
     });
 }
 
-async function updateStatus(id, newStatus) {
+function updateStatus(id, newStatus) {
     db.ref('orders/' + id).once('value').then(async (snap) => {
         const o = snap.val();
+        if (!o) return;
         await db.ref('orders/' + id).update({ status: newStatus });
-        
-        // Auto WhatsApp
-        const shortId = (o.orderId || 'N/A').slice(-6);
-        let emoji = "🔄";
-        if (newStatus === "Shipped") emoji = "🚚";
-        else if (newStatus === "Delivered") emoji = "✅";
-        else if (newStatus === "Cancelled") emoji = "❌";
-
-        const msg = `Namaste ${o.name} ji 🙏\n\nAapka order ID: #${shortId}\nAb status: ${newStatus} ${emoji}\n\nDhanyavaad 🙏\nAarush Ayurveda`;
+        const shortId = (o.orderId || id).slice(-6);
+        let emoji = newStatus === "Shipped" ? "🚚" : newStatus === "Delivered" ? "✅" : newStatus === "Cancelled" ? "❌" : "🔄";
+        const msg = `Namaste ${o.name} ji 🙏\nAapka order ID: #${shortId}\nAb status: ${newStatus} ${emoji}\nDhanyavaad 🙏\nAarush Ayurveda`;
         const phone = o.phone.replace(/\D/g, '');
         window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`, '_blank');
     });
 }
 
 function filterOrders() { renderOrders(allOrders); }
-
-function deleteOrder(id) {
-    if (confirm("Permanently archive this order?")) db.ref('orders/' + id).remove();
-}
-
+function deleteOrder(id) { if (confirm("Delete this order?")) db.ref('orders/' + id).remove(); }
 function exportCSV() {
-    let csv = "Order ID,Customer,Phone,Total,Status,Time\n";
-    allOrders.forEach(o => {
-        csv += `${o.orderId},${o.name},${o.phone},${o.total},${o.status},${o.time}\n`;
-    });
+    let csv = "ID,Customer,Phone,Total,Status,Time\n";
+    allOrders.forEach(o => { csv += `${o.orderId || o.id},${o.name},${o.phone},${o.total},${o.status},${o.time}\n`; });
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
-    a.download = 'AarushOrders.csv';
-    a.click();
+    a.href = url; a.download = 'AarushOrders.csv'; a.click();
 }
 
-// ---------------- PRODUCT MANAGEMENT ----------------
-
-const prodForm = document.getElementById('product-form');
-
+// Product Management
 function fetchProducts() {
     db.ref('products').on('value', snap => {
         const data = snap.val();
@@ -155,12 +175,9 @@ function fetchProducts() {
                     <tr class="hover:bg-stone-50 transition">
                         <td class="p-6 flex items-center space-x-4">
                             <img src="${p.image}" class="w-10 h-10 object-cover rounded-lg shadow-sm">
-                            <div>
-                                <div class="font-bold text-sm text-primary">${p.name}</div>
-                                <div class="text-[9px] text-stone-400 uppercase tracking-widest truncate max-w-[150px]">${p.description}</div>
-                            </div>
+                            <div><div class="font-bold text-sm text-primary">${p.name}</div></div>
                         </td>
-                        <td class="p-6 font-bold text-gold text-sm font-['Playfair_Display']">₹${p.price}</td>
+                        <td class="p-6 font-bold text-gold text-sm">₹${p.price}</td>
                         <td class="p-6 text-center">
                             <span class="px-3 py-1 rounded-full text-[10px] font-bold ${p.stock < 5 ? 'bg-rose-100 text-rose-600' : 'bg-emerald-100 text-emerald-600'}">${p.stock}</span>
                         </td>
@@ -170,13 +187,13 @@ function fetchProducts() {
                                 <button onclick="deleteProduct('${id}')" class="text-rose-400 hover:text-rose-600"><i class="fa-solid fa-trash-can"></i></button>
                             </div>
                         </td>
-                    </tr>
-                `;
+                    </tr>`;
             });
         }
     });
 }
 
+const prodForm = document.getElementById('product-form');
 prodForm.onsubmit = (e) => {
     e.preventDefault();
     const id = document.getElementById('edit-id').value;
@@ -185,8 +202,7 @@ prodForm.onsubmit = (e) => {
         price: Number(document.getElementById('prod-price').value),
         image: document.getElementById('prod-img').value,
         stock: Number(document.getElementById('prod-stock').value),
-        description: document.getElementById('prod-desc').value,
-        createdAt: new Date().getTime()
+        description: document.getElementById('prod-desc').value
     };
     if (id) db.ref('products/' + id).update(prodData);
     else db.ref('products').push(prodData);
@@ -202,24 +218,12 @@ function editProduct(id) {
         document.getElementById('prod-img').value = p.image;
         document.getElementById('prod-stock').value = p.stock;
         document.getElementById('prod-desc').value = p.description;
-        document.getElementById('form-title').innerText = "Edit Inventory Item";
+        document.getElementById('form-title').innerText = "Edit Product";
         document.getElementById('prod-submit').innerText = "Update Product";
     });
 }
+function deleteProduct(id) { if (confirm("Delete Product?")) db.ref('products/' + id).remove(); }
+function resetForm() { prodForm.reset(); document.getElementById('edit-id').value = ''; document.getElementById('form-title').innerText = "Add New Product"; document.getElementById('prod-submit').innerText = "Save Product"; }
 
-function deleteProduct(id) {
-    if (confirm("Remove item from inventory vault?")) db.ref('products/' + id).remove();
-}
-
-function resetForm() {
-    prodForm.reset();
-    document.getElementById('edit-id').value = '';
-    document.getElementById('form-title').innerText = "Add New Product";
-    document.getElementById('prod-submit').innerText = "Save Product";
-}
-
-// Global Load
-window.onload = () => {
-    fetchOrders();
-    fetchProducts();
-};
+// Start Auth Check
+checkAuth();
