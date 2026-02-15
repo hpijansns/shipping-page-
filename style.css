@@ -1,60 +1,91 @@
-/* Custom Animations */
-@keyframes slow-zoom {
-    0% { transform: scale(1.05); }
-    100% { transform: scale(1.15); }
+:root {
+    --primary: #1b4332;
+    --gold: #d4af37;
 }
 
-.animate-slow-zoom {
-    animation: slow-zoom 20s infinite alternate ease-in-out;
+body {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
 }
 
-/* Scrollbar Customization */
-::-webkit-scrollbar {
-    width: 6px;
+/* Glassmorphism Navigation */
+.glass-nav {
+    background: rgba(255, 255, 255, 0.01);
+    backdrop-blur: 10px;
 }
 
-::-webkit-scrollbar-track {
-    background: #f1f1f1;
+.nav-scrolled {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 1rem 0;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
 }
 
-::-webkit-scrollbar-thumb {
-    background: #d4af37;
-    border-radius: 10px;
+.nav-scrolled .nav-text {
+    color: var(--primary) !important;
 }
 
-/* Product Card Effects */
+/* Product Cards */
 .product-card {
-    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .product-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 20px 40px rgba(27, 67, 50, 0.1);
+    transform: translateY(-15px);
 }
 
-/* Cart Toggle Logic */
-#cart-drawer.active {
-    visibility: visible;
+.product-card .img-overlay {
+    background: linear-gradient(to top, rgba(27, 67, 50, 0.6), transparent);
+    opacity: 0;
+    transition: 0.5s;
 }
 
-#cart-drawer.active .translate-x-full {
-    transform: translateX(0);
+.product-card:hover .img-overlay {
+    opacity: 1;
 }
 
-/* Loader */
-#loader {
-    display: none;
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+}
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb {
+    background: var(--gold);
+    border-radius: 10px;
 }
 
-#loader.active {
-    display: block;
+/* Modal Animations */
+#success-card.show {
+    transform: scale(1);
 }
 
-/* Form Styling */
-input:focus, textarea:focus {
-    border-color: #d4af37 !important;
+/* Radio Button Styling */
+input[type="radio"]:checked + .radio-circle::after {
+    content: '';
+    width: 10px;
+    height: 10px;
+    background: var(--gold);
+    border-radius: 50%;
 }
 
-.tab-content.hidden {
-    display: none;
+input[type="radio"]:checked + .radio-circle {
+    border-color: var(--gold);
 }
+
+/* Stats Decoration */
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 5px;
+    background: var(--gold);
+    opacity: 0.3;
+}
+
+.badge-new { background: #e0f2fe; color: #0369a1; }
+.badge-processing { background: #fef3c7; color: #92400e; }
+.badge-shipped { background: #dcfce7; color: #166534; }
+.badge-delivered { background: #f1f5f9; color: #475569; }
