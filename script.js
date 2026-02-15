@@ -1,9 +1,4 @@
-/**
- * Aarush Ayurveda - Core Application Script
- * GitHub Pages Compatible - No ES Modules
- */
-
-// Firebase Initialization
+// Firebase Config
 const firebaseConfig = {
     apiKey: "AIzaSyBXVrbfucAyj9wud-sY2BaO2mLO8JaeeQE",
     authDomain: "ship-53cd8.firebaseapp.com",
@@ -14,260 +9,268 @@ const firebaseConfig = {
     appId: "1:682363394250:web:705c36de45058f4a26bc33"
 };
 
+// Init Firebase
 firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+const database = firebase.database();
 
-// State Management
-let cart = JSON.parse(localStorage.getItem('aarush_cart')) || [];
+// State
+let cart = JSON.parse(localStorage.getItem('aarush_luxury_cart')) || [];
 let products = [];
 
-// DOM Elements
-const productList = document.getElementById('product-list');
-const cartDrawer = document.getElementById('cart-drawer');
-const cartItemsContainer = document.getElementById('cart-items');
-const cartCount = document.getElementById('cart-count');
-const cartTotal = document.getElementById('cart-total');
-const checkoutModal = document.getElementById('checkout-modal');
-const orderForm = document.getElementById('order-form');
-
-// Initialization
-window.onload = () => {
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
     fetchProducts();
     updateCartUI();
-};
+});
 
-// --- Store Functions ---
-
-async function fetchProducts() {
-    db.ref('products').on('value', (snapshot) => {
-        products = [];
+// Fetch Products
+function fetchProducts() {
+    const grid = document.getElementById('product-grid');
+    database.ref('products').on('value', (snapshot) => {
         const data = snapshot.val();
+        products = [];
+        grid.innerHTML = '';
         if (data) {
             Object.keys(data).forEach(id => {
-                products.push({ id, ...data[id] });
+                const p = data[id];
+                p.id = id;
+                products.push(p);
+                renderProduct(p);
             });
-            renderProducts();
         } else {
-            productList.innerHTML = `<div class="col-span-full text-center py-10">Our herbal treasures are being prepared. Check back soon!</div>`;
+            grid.innerHTML = '<div class="col-span-4 text-center py-20 opacity-50">Our vault is being restocked...</div>';
         }
     });
 }
 
-function renderProducts() {
-    productList.innerHTML = products.map(p => `
-        <div class="product-card bg-white rounded-2xl overflow-hidden border border-stone-100 flex flex-col h-full" data-aos="fade-up">
-            <div class="relative overflow-hidden group">
-                <img src="${p.image}" alt="${p.name}" class="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110">
-                ${p.stock <= 0 ? '<div class="absolute inset-0 bg-black/60 flex items-center justify-center text-white font-bold uppercase tracking-widest text-sm">Out of Stock</div>' : ''}
-            </div>
-            <div class="p-6 flex flex-col flex-1">
-                <h3 class="text-xl font-bold text-primary font-['Playfair_Display'] mb-2">${p.name}</h3>
-                <p class="text-stone-500 text-sm mb-4 flex-1 line-clamp-2">${p.description}</p>
-                <div class="flex items-center justify-between mt-auto">
-                    <span class="text-lg font-bold text-primary">₹${p.price}</span>
-                    <button 
-                        onclick="addToCart('${p.id}')" 
-                        ${p.stock <= 0 ? 'disabled' : ''}
-                        class="bg-gold text-primary p-3 rounded-lg hover:bg-primary hover:text-white transition-all disabled:bg-gray-200 disabled:text-gray-400">
-                        <i class="fa-solid fa-cart-plus"></i>
-                    </button>
+function renderProduct(p) {
+    const isOutOfStock = p.stock <= 0;
+    const isLowStock = p.stock > 0 && p.stock <= 5;
+    const grid = document.getElementById('product-grid');
+    
+    const card = `
+        <div class="product-card group" data-aos="fade-up">
+            <div class="relative overflow-hidden rounded-[30px] aspect-[4/5] bg-gray-100">
+                <img src="${p.image}" alt="${p.name}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                <div class="img-overlay absolute inset-0 flex items-center justify-center">
+                    ${!isOutOfStock ? `
+                        <button onclick="addToCart('${p.id}')" class="bg-white text-luxuryGreen font-bold px-8 py-3 rounded-full uppercase tracking-widest text-xs transform translate-y-10 group-hover:translate-y-0 transition-all duration-500 shadow-2xl">
+                            Add to Bag
+                        </button>
+                    ` : ''}
                 </div>
+                ${isOutOfStock ? '<div class="absolute top-6 left-6 bg-black text-white text-[10px] font-bold px-4 py-1 rounded-full uppercase tracking-widest">Out of Stock</div>' : ''}
+                ${isLowStock ? '<div class="absolute top-6 left-6 bg-red-600 text-white text-[10px] font-bold px-4 py-1 rounded-full uppercase tracking-widest">Limited Supply</div>' : ''}
+            </div>
+            <div class="mt-8 text-center">
+                <h3 class="text-xl font-['Playfair_Display'] font-bold mb-2">${p.name}</h3>
+                <p class="text-gold font-bold tracking-widest text-sm">₹${p.price.toLocaleString()}</p>
             </div>
         </div>
-    `).join('');
+    `;
+    grid.innerHTML += card;
 }
 
-// --- Cart Functions ---
-
+// Cart Logic
 function toggleCart() {
-    cartDrawer.classList.toggle('active');
-    cartDrawer.classList.toggle('invisible');
+    const drawer = document.getElementById('cart-drawer');
+    const overlay = document.getElementById('cart-overlay');
+    const content = document.getElementById('cart-content');
+    
+    if (drawer.classList.contains('invisible')) {
+        drawer.classList.remove('invisible');
+        setTimeout(() => {
+            overlay.classList.add('opacity-100');
+            content.classList.remove('translate-x-full');
+        }, 10);
+    } else {
+        overlay.classList.remove('opacity-100');
+        content.classList.add('translate-x-full');
+        setTimeout(() => drawer.classList.add('invisible'), 500);
+    }
 }
 
 function addToCart(id) {
     const product = products.find(p => p.id === id);
-    const existing = cart.find(item => item.id === id);
+    if (product.stock <= 0) return;
 
+    const existing = cart.find(item => item.id === id);
     if (existing) {
-        if (existing.quantity < product.stock) {
-            existing.quantity++;
+        if (existing.qty < product.stock) {
+            existing.qty++;
         } else {
-            alert('Limit reached for current stock.');
+            alert('This is the last available unit of this rare formulation.');
         }
     } else {
-        cart.push({ ...product, quantity: 1 });
+        cart.push({ ...product, qty: 1 });
     }
-
-    saveCart();
     updateCartUI();
-    if (!cartDrawer.classList.contains('active')) toggleCart();
+    toggleCart();
 }
 
 function updateQty(id, delta) {
     const item = cart.find(i => i.id === id);
     const product = products.find(p => p.id === id);
-
-    if (item) {
-        if (delta > 0 && item.quantity >= product.stock) {
-            alert('Insufficient stock.');
-            return;
-        }
-        item.quantity += delta;
-        if (item.quantity <= 0) {
-            cart = cart.filter(i => i.id !== id);
-        }
+    
+    if (delta > 0 && item.qty >= product.stock) return;
+    
+    item.qty += delta;
+    if (item.qty <= 0) {
+        cart = cart.filter(i => i.id !== id);
     }
-    saveCart();
     updateCartUI();
-}
-
-function removeItem(id) {
-    cart = cart.filter(i => i.id !== id);
-    saveCart();
-    updateCartUI();
-}
-
-function saveCart() {
-    localStorage.setItem('aarush_cart', JSON.stringify(cart));
 }
 
 function updateCartUI() {
-    cartCount.innerText = cart.reduce((acc, item) => acc + item.quantity, 0);
-    let total = 0;
-
-    if (cart.length === 0) {
-        cartItemsContainer.innerHTML = `<div class="text-center py-20 text-gray-400">Your bag is as light as air.</div>`;
-    } else {
-        cartItemsContainer.innerHTML = cart.map(item => {
-            total += item.price * item.quantity;
-            return `
-                <div class="flex items-center space-x-4 border-b border-stone-100 pb-4">
-                    <img src="${item.image}" class="w-16 h-16 object-cover rounded-lg">
-                    <div class="flex-1">
-                        <h4 class="font-bold text-primary text-sm">${item.name}</h4>
-                        <p class="text-gold font-semibold text-sm">₹${item.price}</p>
-                        <div class="flex items-center space-x-3 mt-2">
-                            <button onclick="updateQty('${item.id}', -1)" class="w-6 h-6 border flex items-center justify-center rounded hover:bg-stone-100">-</button>
-                            <span class="text-sm font-bold">${item.quantity}</span>
-                            <button onclick="updateQty('${item.id}', 1)" class="w-6 h-6 border flex items-center justify-center rounded hover:bg-stone-100">+</button>
-                        </div>
-                    </div>
-                    <button onclick="removeItem('${item.id}')" class="text-stone-300 hover:text-red-500 transition"><i class="fa-solid fa-trash-can"></i></button>
-                </div>
-            `;
-        }).join('');
-    }
-    cartTotal.innerText = `₹${total}`;
-}
-
-// --- Checkout Functions ---
-
-function showCheckout() {
-    if (cart.length === 0) return alert('Your cart is empty.');
-    toggleCart();
-    checkoutModal.classList.remove('hidden');
-    renderOrderSummary();
-}
-
-function hideCheckout() {
-    checkoutModal.classList.add('hidden');
-}
-
-function renderOrderSummary() {
-    const summary = document.getElementById('order-summary');
-    let total = cart.reduce((acc, i) => acc + (i.price * i.quantity), 0);
+    localStorage.setItem('aarush_luxury_cart', JSON.stringify(cart));
+    const list = document.getElementById('cart-items');
+    const countEl = document.getElementById('cart-count');
+    const totalEl = document.getElementById('cart-total');
     
-    summary.innerHTML = `
-        <div class="font-bold text-primary mb-2">Order Summary</div>
-        ${cart.map(i => `
-            <div class="flex justify-between">
-                <span>${i.name} × ${i.quantity}</span>
-                <span>₹${i.price * i.quantity}</span>
+    countEl.innerText = cart.reduce((acc, i) => acc + i.qty, 0);
+    let total = 0;
+    list.innerHTML = '';
+    
+    cart.forEach(item => {
+        total += item.price * item.qty;
+        list.innerHTML += `
+            <div class="flex gap-6 items-center border-b border-gray-100 pb-6">
+                <img src="${item.image}" class="w-20 h-20 object-cover rounded-2xl">
+                <div class="flex-1">
+                    <h4 class="font-['Playfair_Display'] font-bold text-sm mb-1">${item.name}</h4>
+                    <p class="text-gold text-xs font-bold mb-3">₹${item.price.toLocaleString()}</p>
+                    <div class="flex items-center gap-4">
+                        <button onclick="updateQty('${item.id}', -1)" class="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gold hover:text-white transition-all">-</button>
+                        <span class="text-xs font-bold">${item.qty}</span>
+                        <button onclick="updateQty('${item.id}', 1)" class="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gold hover:text-white transition-all">+</button>
+                    </div>
+                </div>
             </div>
-        `).join('')}
-        <div class="flex justify-between font-bold text-primary pt-2 border-t mt-2">
-            <span>Payable Amount</span>
-            <span>₹${total}</span>
+        `;
+    });
+    
+    totalEl.innerText = `₹${total.toLocaleString()}`;
+    if (cart.length === 0) {
+        list.innerHTML = '<div class="text-center py-20 opacity-30 text-sm tracking-widest">YOUR SELECTION IS EMPTY</div>';
+    }
+}
+
+// Checkout
+function showCheckout() {
+    if (cart.length === 0) return alert('Your selection bag is empty.');
+    toggleCart();
+    document.getElementById('checkout-modal').classList.remove('hidden');
+    
+    const summary = document.getElementById('checkout-summary');
+    let total = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
+    summary.innerHTML = `
+        <div class="flex justify-between font-bold text-gray-400 uppercase tracking-widest mb-4">
+            <span>Items Bag</span>
+            <span>Subtotal</span>
+        </div>
+        ${cart.map(i => `<div class="flex justify-between mb-2"><span>${i.name} (x${i.qty})</span><span>₹${(i.price * i.qty).toLocaleString()}</span></div>`).join('')}
+        <div class="border-t border-gray-200 mt-4 pt-4 flex justify-between text-lg font-bold text-luxuryGreen">
+            <span>TOTAL</span>
+            <span class="text-gold">₹${total.toLocaleString()}</span>
         </div>
     `;
 }
 
-orderForm.onsubmit = async (e) => {
+function hideCheckout() {
+    document.getElementById('checkout-modal').classList.add('hidden');
+}
+
+document.getElementById('order-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const btn = document.getElementById('submit-btn');
-    const loader = document.getElementById('loader');
-
+    const btn = document.getElementById('place-order-btn');
     btn.disabled = true;
-    loader.classList.remove('hidden');
+    btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> AUTHORIZING...';
 
+    const orderId = 'AA-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+    const total = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
+    
     const orderData = {
+        orderId,
         name: document.getElementById('cust-name').value,
         phone: document.getElementById('cust-phone').value,
         email: document.getElementById('cust-email').value,
         address: document.getElementById('cust-address').value,
-        items: cart.map(i => ({ name: i.name, quantity: i.quantity, price: i.price })),
-        total: cart.reduce((acc, i) => acc + (i.price * i.quantity), 0),
+        items: cart.map(i => ({ name: i.name, qty: i.qty, price: i.price })),
+        total,
         paymentMethod: document.querySelector('input[name="payment"]:checked').value,
         status: "New",
         time: new Date().toLocaleString()
     };
 
     try {
-        // Save to Firebase
-        const orderId = db.ref('orders').push().key;
-        await db.ref('orders/' + orderId).set(orderData);
+        // Save Order
+        await database.ref('orders').push(orderData);
 
         // Update Stock
         for (const item of cart) {
-            const productRef = db.ref('products/' + item.id);
-            const snapshot = await productRef.once('value');
-            const currentStock = snapshot.val().stock;
-            await productRef.update({ stock: Math.max(0, currentStock - item.quantity) });
+            const product = products.find(p => p.id === item.id);
+            const newStock = product.stock - item.qty;
+            await database.ref('products/' + item.id).update({ stock: newStock });
         }
 
         // Telegram Alert
-        await sendTelegramAlert(orderData);
+        await sendTelegram(orderData);
 
-        alert('Success! Your order has been placed. Our wellness experts will contact you soon.');
+        // Success
         cart = [];
-        saveCart();
         updateCartUI();
         hideCheckout();
-        orderForm.reset();
+        document.getElementById('order-form').reset();
+        
+        document.getElementById('success-modal').classList.remove('hidden');
+        document.getElementById('success-msg').innerText = `Your order ${orderId} has been successfully authorized for premium dispatch.`;
+        setTimeout(() => document.getElementById('success-card').classList.add('show'), 100);
+
     } catch (err) {
         console.error(err);
-        alert('Order processing failed. Please try again.');
+        alert('Authorization failed. Please contact your premium concierge.');
     } finally {
         btn.disabled = false;
-        loader.classList.add('hidden');
+        btn.innerHTML = 'PLACE YOUR ORDER <i class="fa-solid fa-arrow-right"></i>';
     }
-};
+});
 
-async function sendTelegramAlert(order) {
-    const botToken = "8519947258:AAGJzcVNkJXGndbc1O9C2e_rNgQWAleNhFY";
-    const chatId = "6820660513";
-    const itemsText = order.items.map(i => `${i.name} (x${i.quantity})`).join('\n');
+function closeSuccess() {
+    document.getElementById('success-card').classList.remove('show');
+    setTimeout(() => document.getElementById('success-modal').classList.add('hidden'), 500);
+}
+
+async function sendTelegram(order) {
+    const BOT_TOKEN = "8519947258:AAGJzcVNkJXGndbc1O9C2e_rNgQWAleNhFY";
+    const CHAT_ID = "6820660513";
     
-    const message = `🌿 *New Order Received*\n` +
-                    `----------------------\n` +
-                    `👤 *Customer:* ${order.name}\n` +
-                    `📞 *Phone:* ${order.phone}\n` +
-                    `📧 *Email:* ${order.email}\n` +
-                    `📍 *Address:* ${order.address}\n\n` +
-                    `📦 *Items:*\n${itemsText}\n\n` +
-                    `💰 *Total:* ₹${order.total}\n` +
-                    `💳 *Method:* ${order.paymentMethod}\n` +
-                    `⏰ *Time:* ${order.time}`;
+    let itemsText = order.items.map(i => `• ${i.name} (x${i.qty})`).join('\n');
+    
+    const message = `
+🌟 *NEW PREMIUM ORDER: ${order.orderId}*
+---------------------------------------
+👤 *Customer:* ${order.name}
+📞 *Phone:* ${order.phone}
+📧 *Email:* ${order.email}
+📍 *Address:* ${order.address}
 
-    try {
-        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                chat_id: chatId,
-                text: message,
-                parse_mode: 'Markdown'
-            })
-        });
-    } catch (e) { console.error("Telegram alert failed"); }
+📦 *Items Ordered:*
+${itemsText}
+
+💰 *Total Amount:* ₹${order.total.toLocaleString()}
+💳 *Method:* ${order.paymentMethod}
+⏰ *Time:* ${order.time}
+---------------------------------------
+Aarush Ayurveda Elite Dashboard
+    `;
+
+    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            chat_id: CHAT_ID,
+            text: message,
+            parse_mode: 'Markdown'
+        })
+    });
 }
