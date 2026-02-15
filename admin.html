@@ -3,109 +3,138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard | Aarush Ayurveda</title>
+    <title>Dashboard | Aarush Ayurveda Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { primary: '#1b4332', gold: '#d4af37' }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Poppins', sans-serif; }
+        .tab-btn.active { border-bottom: 2px solid #d4af37; color: #d4af37; }
+    </style>
 </head>
-<body class="admin-body">
+<body class="bg-gray-100 min-h-screen">
 
-    <div class="admin-container">
-        <!-- Sidebar -->
-        <aside class="admin-sidebar">
-            <h2>Admin Panel</h2>
-            <nav>
-                <button onclick="showPanel('stats')"><i class="fas fa-chart-pie"></i> Overview</button>
-                <button onclick="showPanel('products')"><i class="fas fa-leaf"></i> Products</button>
-                <button onclick="showPanel('orders')"><i class="fas fa-shopping-cart"></i> Orders</button>
-                <a href="index.html" class="back-btn">View Store</a>
-            </nav>
-        </aside>
+    <nav class="bg-primary text-white p-6 shadow-xl">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold tracking-widest uppercase">Admin <span class="text-gold">Dashboard</span></h1>
+            <a href="index.html" class="bg-white/10 px-4 py-2 rounded-lg hover:bg-white/20 transition text-sm">Back to Store</a>
+        </div>
+    </nav>
 
-        <!-- Main Content -->
-        <main class="admin-main">
-            <!-- Stats Panel -->
-            <div id="panel-stats" class="panel active">
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <h3 id="stat-total-orders">0</h3>
-                        <p>Total Orders</p>
-                    </div>
-                    <div class="stat-card">
-                        <h3 id="stat-new-orders">0</h3>
-                        <p>New Orders</p>
-                    </div>
-                    <div class="stat-card">
-                        <h3 id="stat-shipped-orders">0</h3>
-                        <p>Shipped</p>
-                    </div>
-                </div>
+    <div class="container mx-auto p-6">
+        <!-- Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+            <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-gold">
+                <p class="text-gray-500 text-sm uppercase">Total Orders</p>
+                <p id="stat-total" class="text-3xl font-bold text-primary">0</p>
             </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500">
+                <p class="text-gray-500 text-sm uppercase">New Orders</p>
+                <p id="stat-new" class="text-3xl font-bold text-blue-500">0</p>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-yellow-500">
+                <p class="text-gray-500 text-sm uppercase">Processing</p>
+                <p id="stat-proc" class="text-3xl font-bold text-yellow-500">0</p>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-green-500">
+                <p class="text-gray-500 text-sm uppercase">Shipped</p>
+                <p id="stat-ship" class="text-3xl font-bold text-green-500">0</p>
+            </div>
+        </div>
 
-            <!-- Product Management Panel -->
-            <div id="panel-products" class="panel">
-                <div class="panel-header">
-                    <h2>Product Inventory</h2>
-                    <button class="btn-primary" onclick="toggleProductModal(true)">Add New Product</button>
+        <!-- Navigation Tabs -->
+        <div class="flex space-x-8 border-b mb-8 overflow-x-auto">
+            <button onclick="switchTab('orders')" id="tab-orders" class="tab-btn pb-4 font-semibold active whitespace-nowrap">Manage Orders</button>
+            <button onclick="switchTab('products')" id="tab-products" class="tab-btn pb-4 font-semibold whitespace-nowrap">Inventory & Products</button>
+        </div>
+
+        <!-- Orders Section -->
+        <div id="section-orders" class="tab-content">
+            <div class="flex flex-col md:flex-row gap-4 mb-6">
+                <input type="text" id="search-order" onkeyup="filterOrders()" placeholder="Search by name or phone..." class="flex-1 p-3 border rounded-lg shadow-sm outline-none focus:ring-1 focus:ring-gold">
+                <button onclick="exportCSV()" class="bg-primary text-gold px-6 py-3 rounded-lg font-bold hover:bg-accent transition flex items-center justify-center">
+                    <i class="fa-solid fa-file-csv mr-2"></i> Export CSV
+                </button>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-gray-50 border-b">
+                        <tr>
+                            <th class="p-4 text-xs font-bold uppercase text-gray-500">Date/Time</th>
+                            <th class="p-4 text-xs font-bold uppercase text-gray-500">Customer</th>
+                            <th class="p-4 text-xs font-bold uppercase text-gray-500">Items</th>
+                            <th class="p-4 text-xs font-bold uppercase text-gray-500">Total</th>
+                            <th class="p-4 text-xs font-bold uppercase text-gray-500">Status</th>
+                            <th class="p-4 text-xs font-bold uppercase text-gray-500 text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="order-rows">
+                        <!-- Dynamic Orders -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Products Section -->
+        <div id="section-products" class="tab-content hidden">
+            <div class="grid lg:grid-cols-3 gap-8">
+                <!-- Add/Edit Form -->
+                <div class="bg-white p-8 rounded-xl shadow-sm h-fit sticky top-28">
+                    <h3 id="form-title" class="text-xl font-bold text-primary mb-6">Add New Product</h3>
+                    <form id="product-form" class="space-y-4">
+                        <input type="hidden" id="edit-id">
+                        <div>
+                            <label class="text-xs font-bold text-gray-400 uppercase">Product Name</label>
+                            <input type="text" id="prod-name" required class="w-full p-2 border-b focus:border-gold outline-none transition">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-400 uppercase">Price (₹)</label>
+                            <input type="number" id="prod-price" required class="w-full p-2 border-b focus:border-gold outline-none transition">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-400 uppercase">Image URL</label>
+                            <input type="url" id="prod-img" required class="w-full p-2 border-b focus:border-gold outline-none transition">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-400 uppercase">Stock Count</label>
+                            <input type="number" id="prod-stock" required class="w-full p-2 border-b focus:border-gold outline-none transition">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-400 uppercase">Description</label>
+                            <textarea id="prod-desc" required rows="2" class="w-full p-2 border-b focus:border-gold outline-none transition"></textarea>
+                        </div>
+                        <div class="pt-4 flex gap-2">
+                            <button type="submit" id="prod-submit" class="flex-1 bg-primary text-gold py-3 rounded font-bold uppercase tracking-widest text-xs">Save Product</button>
+                            <button type="button" onclick="resetProdForm()" class="bg-gray-100 text-gray-500 px-4 py-3 rounded font-bold uppercase text-xs">Reset</button>
+                        </div>
+                    </form>
                 </div>
-                <div class="table-container">
-                    <table>
-                        <thead>
+                <!-- Table -->
+                <div class="lg:col-span-2 bg-white rounded-xl shadow-sm overflow-hidden">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-50 border-b">
                             <tr>
-                                <th>Image</th>
-                                <th>Name</th>
-                                <th>Price</th>
-                                <th>Stock</th>
-                                <th>Actions</th>
+                                <th class="p-4 text-xs font-bold uppercase text-gray-500">Product</th>
+                                <th class="p-4 text-xs font-bold uppercase text-gray-500">Price</th>
+                                <th class="p-4 text-xs font-bold uppercase text-gray-500 text-center">Stock</th>
+                                <th class="p-4 text-xs font-bold uppercase text-gray-500 text-center">Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="admin-product-list"></tbody>
+                        <tbody id="product-rows">
+                            <!-- Dynamic Products -->
+                        </tbody>
                     </table>
                 </div>
             </div>
-
-            <!-- Order Management Panel -->
-            <div id="panel-orders" class="panel">
-                <div class="panel-header">
-                    <h2>Order Management</h2>
-                    <div class="search-box">
-                        <input type="text" id="orderSearch" onkeyup="searchOrders()" placeholder="Search Name/Phone...">
-                        <button onclick="exportOrdersToCSV()" class="btn-secondary">Export CSV</button>
-                    </div>
-                </div>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Order Date</th>
-                                <th>Customer</th>
-                                <th>Items</th>
-                                <th>Total</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="admin-order-list"></tbody>
-                    </table>
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <!-- Product Modal -->
-    <div id="product-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="toggleProductModal(false)">&times;</span>
-            <h2 id="product-modal-title">Add Product</h2>
-            <form id="product-form">
-                <input type="hidden" id="edit-product-id">
-                <input type="text" id="prod-name" placeholder="Product Name" required>
-                <input type="number" id="prod-price" placeholder="Price (₹)" required>
-                <input type="text" id="prod-image" placeholder="Image URL" required>
-                <textarea id="prod-desc" placeholder="Product Description" required></textarea>
-                <input type="number" id="prod-stock" placeholder="Stock Quantity" required>
-                <button type="submit" class="btn-primary w-100 mt-2">Save Product</button>
-            </form>
         </div>
     </div>
 
