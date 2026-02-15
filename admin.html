@@ -1,169 +1,158 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aarush | Admin Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body { font-family: 'Poppins', sans-serif; background: #f4f7f6; }
-        .sidebar { background: #1b4332; }
-        .active-tab { background: rgba(212, 175, 55, 0.1); border-left: 4px solid #d4af37; color: #d4af37 !important; }
-        .stat-card { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid rgba(27,67,50,0.05); }
-    </style>
-</head>
-<body class="flex">
+// Firebase Config
+const firebaseConfig = {
+    apiKey: "AIzaSyBXVrbfucAyj9wud-sY2BaO2mLO8JaeeQE",
+    authDomain: "ship-53cd8.firebaseapp.com",
+    databaseURL: "https://ship-53cd8-default-rtdb.firebaseio.com",
+    projectId: "ship-53cd8",
+    storageBucket: "ship-53cd8.firebasestorage.app",
+    messagingSenderId: "682363394250",
+    appId: "1:682363394250:web:705c36de45058f4a26bc33"
+};
 
-    <!-- Sidebar -->
-    <aside class="sidebar h-screen w-72 text-white/70 fixed left-0 top-0 flex flex-col p-8">
-        <div class="mb-12">
-            <h1 class="text-2xl font-['Playfair_Display'] font-bold text-white tracking-tight">Admin <span class="text-gold">Hub</span></h1>
-            <p class="text-[10px] uppercase tracking-[0.2em] mt-1 opacity-50">Aarush Ayurveda v1.0</p>
-        </div>
+// Initialize
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+
+let allOrders = [];
+
+/**
+ * 1. Fetch Orders in Real-Time
+ */
+function fetchOrders() {
+    database.ref('orders').on('value', (snapshot) => {
+        const data = snapshot.val();
+        allOrders = [];
+
+        if (data) {
+            Object.keys(data).forEach(id => {
+                allOrders.push({ id, ...data[id] });
+            });
+            // Newest first
+            allOrders.reverse();
+        }
+
+        calculateStats(allOrders);
+        renderOrders(allOrders);
+    }, (error) => {
+        console.error("Database Error: ", error);
+    });
+}
+
+/**
+ * 2. Calculate Dashboard Stats
+ */
+function calculateStats(orders) {
+    let revenue = 0;
+    let counts = {
+        total: orders.length,
+        new: 0,
+        processing: 0,
+        shipped: 0,
+        delivered: 0,
+        cancelled: 0
+    };
+
+    orders.forEach(order => {
+        // Convert total to number safely
+        const amount = parseFloat(order.total) || 0;
+        revenue += amount;
+
+        const status = (order.status || 'New').toLowerCase();
+        if (status === 'new') counts.new++;
+        else if (status === 'processing') counts.processing++;
+        else if (status === 'shipped') counts.shipped++;
+        else if (status === 'delivered') counts.delivered++;
+        else if (status === 'cancelled') counts.cancelled++;
+    });
+
+    // Update DOM
+    document.getElementById('totalRevenue').innerText = `₹${revenue.toLocaleString()}`;
+    document.getElementById('totalOrders').innerText = counts.total;
+    document.getElementById('newCount').innerText = counts.new;
+    document.getElementById('processingCount').innerText = counts.processing;
+    document.getElementById('shippedCount').innerText = counts.shipped;
+    document.getElementById('deliveredCount').innerText = counts.delivered;
+    document.getElementById('cancelledCount').innerText = counts.cancelled;
+}
+
+/**
+ * 3. Render Table UI
+ */
+function renderOrders(orders) {
+    const listBody = document.getElementById('orderList');
+    const searchVal = document.getElementById('searchInput').value.toLowerCase();
+    listBody.innerHTML = '';
+
+    const filtered = orders.filter(o => 
+        o.name.toLowerCase().includes(searchVal) || 
+        o.phone.includes(searchVal)
+    );
+
+    if (filtered.length === 0) {
+        listBody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-gray-400">No matching orders found.</td></tr>`;
+        return;
+    }
+
+    filtered.forEach(order => {
+        const row = document.createElement('tr');
+        row.className = "hover:bg-gray-50 transition";
         
-        <nav class="space-y-4 flex-1">
-            <button onclick="switchPanel('stats')" id="tab-stats" class="w-full flex items-center gap-4 p-4 rounded-xl hover:text-white transition-all active-tab">
-                <i class="fa-solid fa-chart-line"></i> Dashboard
-            </button>
-            <button onclick="switchPanel('products')" id="tab-products" class="w-full flex items-center gap-4 p-4 rounded-xl hover:text-white transition-all">
-                <i class="fa-solid fa-leaf"></i> Inventory
-            </button>
-            <button onclick="switchPanel('orders')" id="tab-orders" class="w-full flex items-center gap-4 p-4 rounded-xl hover:text-white transition-all">
-                <i class="fa-solid fa-box-open"></i> Orders
-            </button>
-        </nav>
+        const status = order.status || 'New';
+        const badgeClass = `badge-${status.toLowerCase()}`;
 
-        <a href="index.html" class="flex items-center gap-4 p-4 rounded-xl hover:bg-white/5 mt-auto border border-white/10">
-            <i class="fa-solid fa-eye text-gold"></i> View Store
-        </a>
-    </aside>
+        row.innerHTML = `
+            <td class="p-6">
+                <div class="text-xs font-bold text-gray-400">#${order.id.slice(-6)}</div>
+                <div class="text-[10px] text-gray-500 font-medium mt-1">${order.time || 'Date Unknown'}</div>
+            </td>
+            <td class="p-6">
+                <div class="text-sm font-bold text-gray-800">${order.name}</div>
+                <div class="text-xs text-blue-600 font-medium underline underline-offset-4">${order.phone}</div>
+                <div class="text-[10px] text-gray-400 mt-1 max-w-[200px] truncate">${order.address}</div>
+            </td>
+            <td class="p-6 font-bold text-primary">₹${parseFloat(order.total || 0).toLocaleString()}</td>
+            <td class="p-6">
+                <span class="status-badge ${badgeClass}">${status}</span>
+            </td>
+            <td class="p-6">
+                <div class="flex flex-wrap justify-center gap-2">
+                    <button onclick="updateStatus('${order.id}', 'Processing')" class="text-[10px] font-bold px-3 py-1 bg-blue-50 text-blue-600 border border-blue-200 rounded-md hover:bg-blue-600 hover:text-white transition">Processing</button>
+                    <button onclick="updateStatus('${order.id}', 'Shipped')" class="text-[10px] font-bold px-3 py-1 bg-green-50 text-green-600 border border-green-200 rounded-md hover:bg-green-600 hover:text-white transition">Shipped</button>
+                    <button onclick="updateStatus('${order.id}', 'Delivered')" class="text-[10px] font-bold px-3 py-1 bg-purple-50 text-purple-600 border border-purple-200 rounded-md hover:bg-purple-600 hover:text-white transition">Delivered</button>
+                    <button onclick="updateStatus('${order.id}', 'Cancelled')" class="text-[10px] font-bold px-3 py-1 bg-red-50 text-red-600 border border-red-200 rounded-md hover:bg-red-600 hover:text-white transition">Cancel</button>
+                </div>
+            </td>
+            <td class="p-6 text-center">
+                <button onclick="deleteOrder('${order.id}')" class="text-gray-300 hover:text-red-500 transition px-2">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+            </td>
+        `;
+        listBody.appendChild(row);
+    });
+}
 
-    <!-- Main Content -->
-    <main class="ml-72 flex-1 p-12">
-        
-        <!-- Dashboard Panel -->
-        <div id="panel-stats" class="space-y-12">
-            <div class="flex justify-between items-center">
-                <h2 class="text-3xl font-bold text-luxuryGreen">Performance <span class="font-light">Overview</span></h2>
-                <div class="text-sm bg-luxuryGreen text-white px-4 py-2 rounded-full font-bold">LIVE STATUS</div>
-            </div>
+/**
+ * 4. Update Status (One-Click)
+ */
+function updateStatus(id, newStatus) {
+    database.ref('orders/' + id).update({
+        status: newStatus
+    }).then(() => {
+        console.log(`Order ${id} updated to ${newStatus}`);
+    }).catch(err => {
+        alert("Update failed: " + err.message);
+    });
+}
 
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-                <div class="stat-card">
-                    <p class="text-gray-400 text-xs uppercase font-bold tracking-widest mb-2">Total Revenue</p>
-                    <h3 id="stat-revenue" class="text-3xl font-bold text-luxuryGreen">₹0</h3>
-                </div>
-                <div class="stat-card">
-                    <p class="text-gray-400 text-xs uppercase font-bold tracking-widest mb-2">Total Orders</p>
-                    <h3 id="stat-orders" class="text-3xl font-bold text-luxuryGreen">0</h3>
-                </div>
-                <div class="stat-card">
-                    <p class="text-gray-400 text-xs uppercase font-bold tracking-widest mb-2">New Orders</p>
-                    <h3 id="stat-new" class="text-3xl font-bold text-gold">0</h3>
-                </div>
-                <div class="stat-card">
-                    <p class="text-gray-400 text-xs uppercase font-bold tracking-widest mb-2 text-red-400">Low Stock</p>
-                    <h3 id="stat-low-stock" class="text-3xl font-bold text-red-600">0</h3>
-                </div>
-            </div>
-        </div>
+/**
+ * 5. Delete Logic
+ */
+function deleteOrder(id) {
+    if (confirm("Permanently delete this order data?")) {
+        database.ref('orders/' + id).remove();
+    }
+}
 
-        <!-- Inventory Panel -->
-        <div id="panel-products" class="hidden space-y-8">
-            <div class="flex justify-between items-center">
-                <h2 class="text-3xl font-bold text-luxuryGreen">Inventory <span class="font-light">Vault</span></h2>
-                <button onclick="openProductModal()" class="bg-luxuryGreen text-gold px-8 py-3 rounded-full font-bold uppercase text-xs tracking-widest shadow-xl">Add New Product</button>
-            </div>
-
-            <div class="bg-white rounded-[30px] overflow-hidden shadow-sm border border-gray-100">
-                <table class="w-full text-left border-collapse">
-                    <thead class="bg-gray-50 text-luxuryGreen uppercase text-xs font-bold tracking-widest">
-                        <tr>
-                            <th class="p-8">Image</th>
-                            <th class="p-8">Product Name</th>
-                            <th class="p-8">Price</th>
-                            <th class="p-8 text-center">Stock</th>
-                            <th class="p-8 text-center">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="product-table-body" class="text-sm text-gray-600 font-medium">
-                        <!-- Products -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Orders Panel -->
-        <div id="panel-orders" class="hidden space-y-8">
-            <div class="flex justify-between items-center">
-                <h2 class="text-3xl font-bold text-luxuryGreen">Order <span class="font-light">Archives</span></h2>
-                <div class="flex gap-4">
-                    <input type="text" id="orderSearch" onkeyup="searchOrders()" placeholder="Search by Order ID/Customer..." class="bg-white border-none rounded-full px-8 py-3 w-80 shadow-sm text-sm outline-none focus:ring-2 focus:ring-gold">
-                    <button onclick="exportCSV()" class="bg-white text-luxuryGreen border border-luxuryGreen px-6 py-3 rounded-full font-bold uppercase text-xs tracking-widest hover:bg-luxuryGreen hover:text-white transition-all">Export CSV</button>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-[30px] overflow-hidden shadow-sm border border-gray-100">
-                <table class="w-full text-left border-collapse">
-                    <thead class="bg-gray-50 text-luxuryGreen uppercase text-xs font-bold tracking-widest">
-                        <tr>
-                            <th class="p-8">ID & Time</th>
-                            <th class="p-8">Customer</th>
-                            <th class="p-8">Items</th>
-                            <th class="p-8">Total</th>
-                            <th class="p-8">Status</th>
-                            <th class="p-8 text-center">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="order-table-body" class="text-sm text-gray-600 font-medium">
-                        <!-- Orders -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </main>
-
-    <!-- Product Modal -->
-    <div id="product-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-6 bg-luxuryGreen/90 backdrop-blur-md">
-        <div class="bg-white w-full max-w-xl rounded-3xl overflow-hidden shadow-2xl">
-            <div class="p-8 bg-gold flex justify-between items-center text-white">
-                <h3 id="modal-title" class="text-2xl font-bold font-['Playfair_Display']">Product Details</h3>
-                <button onclick="closeProductModal()" class="text-2xl hover:text-luxuryGreen transition"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <form id="product-form" class="p-10 space-y-6">
-                <input type="hidden" id="edit-id">
-                <div class="space-y-2">
-                    <label class="text-[10px] uppercase font-bold tracking-widest text-gray-400">Product Title</label>
-                    <input type="text" id="prod-name" required class="w-full p-4 bg-gray-50 rounded-xl outline-none border-2 border-transparent focus:border-gold transition">
-                </div>
-                <div class="grid grid-cols-2 gap-6">
-                    <div class="space-y-2">
-                        <label class="text-[10px] uppercase font-bold tracking-widest text-gray-400">Price (₹)</label>
-                        <input type="number" id="prod-price" required class="w-full p-4 bg-gray-50 rounded-xl outline-none border-2 border-transparent focus:border-gold transition">
-                    </div>
-                    <div class="space-y-2">
-                        <label class="text-[10px] uppercase font-bold tracking-widest text-gray-400">Stock Units</label>
-                        <input type="number" id="prod-stock" required class="w-full p-4 bg-gray-50 rounded-xl outline-none border-2 border-transparent focus:border-gold transition">
-                    </div>
-                </div>
-                <div class="space-y-2">
-                    <label class="text-[10px] uppercase font-bold tracking-widest text-gray-400">Premium Image URL</label>
-                    <input type="text" id="prod-img" required class="w-full p-4 bg-gray-50 rounded-xl outline-none border-2 border-transparent focus:border-gold transition">
-                </div>
-                <div class="space-y-2">
-                    <label class="text-[10px] uppercase font-bold tracking-widest text-gray-400">Compelling Description</label>
-                    <textarea id="prod-desc" required rows="3" class="w-full p-4 bg-gray-50 rounded-xl outline-none border-2 border-transparent focus:border-gold transition"></textarea>
-                </div>
-                <button type="submit" class="w-full bg-gold text-white py-5 rounded-2xl font-bold uppercase tracking-widest hover:bg-luxuryGreen transition-all shadow-lg shadow-gold/20">Authorize Entry</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Firebase Compat -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
-    <script src="admin.js"></script>
-</body>
-</html>
+// Start Fetching on Load
+window.onload = fetchOrders;
