@@ -1,16 +1,16 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Aarush Ayurveda | Divine Luxury Wellness</title>
-    <meta name="description" content="Experience the pinnacle of Ayurvedic luxury. Pure, potent, and divine formulations for holistic restoration.">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aarush Ayurveda | Pure Luxury Wellness</title>
+    <meta name="description" content="Minimalist luxury Ayurvedic formulations. Divine wisdom, refined for the modern world.">
     
     <!-- Fonts & Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Tailwind CSS -->
+    <!-- Scripts -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
     
@@ -21,8 +21,6 @@
                     colors: {
                         primary: '#1b4332',
                         gold: '#d4af37',
-                        luxury: '#143125',
-                        divine: '#faf9f6'
                     },
                     fontFamily: {
                         playfair: ['Playfair Display', 'serif'],
@@ -33,225 +31,181 @@
         }
     </script>
     <style>
-        .hero-gradient { background: linear-gradient(to bottom, rgba(27,67,50,0.4), rgba(27,67,50,0.8)); }
-        .glass-card { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); }
-        .gold-glow:hover { box-shadow: 0 0 20px rgba(212, 175, 55, 0.6); }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-divine { animation: fadeIn 1s ease-out forwards; }
+        body { font-family: 'Poppins', sans-serif; background-color: #fafafa; }
+        .font-luxury { font-family: 'Playfair Display', serif; }
+        .hero-fade { animation: fadeIn 1.5s ease-in-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .product-card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.03); }
+        .cart-active { visibility: visible !important; }
+        .cart-active #cart-content { transform: translateX(0) !important; }
     </style>
 </head>
-<body class="bg-divine text-primary font-poppins overflow-x-hidden">
+<body class="text-primary overflow-x-hidden">
 
-    <!-- Navbar -->
-    <nav class="sticky top-0 z-[60] bg-primary/95 backdrop-blur-md border-b border-gold/20 py-3 md:py-5">
-        <div class="container mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-            <a href="index.html" class="flex flex-col">
-                <span class="text-xl md:text-3xl font-bold tracking-[0.2em] text-gold font-playfair uppercase leading-none">Aarush</span>
-                <span class="text-[10px] md:text-xs tracking-[0.4em] text-white uppercase font-light">Ayurveda</span>
-            </a>
-            
-            <div class="flex items-center space-x-4 md:space-x-8">
-                <a href="#products" class="hidden md:block text-white/90 hover:text-gold transition text-xs tracking-widest uppercase font-medium">The Collection</a>
-                <a href="admin.html" class="hidden md:block text-white/60 hover:text-gold transition text-[10px] uppercase tracking-widest">Admin</a>
-                
-                <button onclick="toggleCart()" class="relative p-2 group">
-                    <i class="fa-solid fa-bag-shopping text-xl md:text-2xl text-gold transition-transform group-hover:scale-110"></i>
-                    <span id="cart-count" class="absolute -top-1 -right-1 bg-white text-primary text-[10px] font-bold w-4 h-4 md:w-5 md:h-5 flex items-center justify-center rounded-full shadow-xl">0</span>
-                </button>
-            </div>
+    <!-- Minimal Header -->
+    <nav class="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-stone-100 py-4 px-6 md:px-12 flex justify-between items-center">
+        <a href="index.html" class="text-xl md:text-2xl font-luxury font-bold tracking-widest uppercase">
+            Aarush <span class="text-gold font-light italic">Ayurveda</span>
+        </a>
+        <div class="flex items-center gap-8">
+            <a href="admin.html" class="hidden md:block text-[10px] uppercase tracking-widest opacity-40 hover:opacity-100 transition">Admin</a>
+            <button onclick="toggleCart()" class="relative p-2 group">
+                <i class="fa-solid fa-bag-shopping text-xl group-hover:text-gold transition-colors"></i>
+                <span id="cart-count" class="absolute -top-1 -right-1 bg-primary text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full">0</span>
+            </button>
         </div>
     </nav>
 
-    <!-- Divine Hero -->
-    <section class="relative h-[85vh] md:h-screen flex items-center justify-center overflow-hidden">
-        <div class="absolute inset-0 z-0">
-            <img src="https://images.unsplash.com/photo-1615485290382-441e4d019cb0?auto=format&fit=crop&q=80" alt="Cinematic Ayurveda" class="w-full h-full object-cover scale-105">
-            <div class="absolute inset-0 hero-gradient"></div>
-        </div>
-        
-        <div class="container mx-auto px-4 relative z-10 text-center animate-divine">
-            <h4 class="text-gold tracking-[0.5em] uppercase text-xs md:text-sm mb-6 font-semibold">Tradition Refined</h4>
-            <h1 class="text-4xl md:text-7xl lg:text-8xl font-bold text-white font-playfair mb-8 leading-[1.1]">
-                Divine Wisdom, <br><span class="text-gold italic">Pure Luxury</span>
-            </h1>
-            <p class="text-white/80 text-sm md:text-xl max-w-2xl mx-auto mb-12 font-light leading-relaxed px-4">
-                Handcrafted formulations using rare botanicals, preserved through heritage techniques for the modern elite.
+    <!-- 1. Minimal Hero -->
+    <section class="relative min-h-[80vh] flex items-center justify-center text-center px-6 bg-[#f4f3ef]">
+        <div class="max-w-4xl hero-fade">
+            <h4 class="text-gold uppercase tracking-[0.4em] text-[10px] mb-6 font-semibold">The Sacred Tradition</h4>
+            <h1 class="text-4xl md:text-7xl font-luxury mb-8 leading-tight">Divine Wisdom <br> <span class="italic">Refined for You</span></h1>
+            <p class="text-primary/60 text-sm md:text-lg mb-10 max-w-xl mx-auto font-light leading-relaxed">
+                Handcrafted formulations using rare botanicals, preserved through heritage techniques for holistic restoration.
             </p>
-            <div class="flex flex-col sm:flex-row items-center justify-center gap-6">
-                <a href="#products" class="w-full sm:w-auto bg-gold text-primary px-12 py-4 rounded-full font-bold uppercase tracking-[0.2em] text-xs gold-glow transition-all">
-                    Shop The Vault
-                </a>
-            </div>
-        </div>
-        
-        <div class="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 hidden md:block opacity-50">
-            <div class="w-[1px] h-20 bg-gradient-to-b from-gold to-transparent mx-auto"></div>
+            <a href="#collection" class="inline-block bg-primary text-gold px-10 py-4 rounded-full text-xs font-bold uppercase tracking-widest hover:bg-gold hover:text-primary transition-all duration-500 shadow-sm">
+                Shop The Collection
+            </a>
         </div>
     </section>
 
-    <!-- Trust Strip -->
-    <section class="bg-white py-12 border-b border-stone-100">
-        <div class="container mx-auto px-4 md:px-8">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12">
-                <div class="flex items-center space-x-4">
-                    <div class="w-12 h-12 flex items-center justify-center rounded-full bg-stone-50 text-gold border border-gold/10"><i class="fa-solid fa-leaf"></i></div>
-                    <div><h5 class="text-xs font-bold uppercase tracking-widest text-primary">100% Herbal</h5><p class="text-[10px] text-stone-400 uppercase">Pure Extraction</p></div>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <div class="w-12 h-12 flex items-center justify-center rounded-full bg-stone-50 text-gold border border-gold/10"><i class="fa-solid fa-scroll"></i></div>
-                    <div><h5 class="text-xs font-bold uppercase tracking-widest text-primary">Traditional</h5><p class="text-[10px] text-stone-400 uppercase">Vedic Formulas</p></div>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <div class="w-12 h-12 flex items-center justify-center rounded-full bg-stone-50 text-gold border border-gold/10"><i class="fa-solid fa-truck-fast"></i></div>
-                    <div><h5 class="text-xs font-bold uppercase tracking-widest text-primary">Priority Shipping</h5><p class="text-[10px] text-stone-400 uppercase">Global Delivery</p></div>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <div class="w-12 h-12 flex items-center justify-center rounded-full bg-stone-50 text-gold border border-gold/10"><i class="fa-solid fa-shield-check"></i></div>
-                    <div><h5 class="text-xs font-bold uppercase tracking-widest text-primary">Secure Pay</h5><p class="text-[10px] text-stone-400 uppercase">Encrypted Gateway</p></div>
-                </div>
+    <!-- 2. Clean Product Grid -->
+    <section id="collection" class="py-24 container mx-auto px-6 max-w-6xl">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12">
+            <!-- Products Loaded From Firebase (Max 6 handled in script) -->
+            <div id="product-list" class="contents">
+                <div class="col-span-full text-center py-20 text-stone-300 italic tracking-widest">Loading Treasured Formulations...</div>
             </div>
         </div>
     </section>
 
-    <!-- Product Grid -->
-    <section id="products" class="py-20 md:py-32 container mx-auto px-4 sm:px-6">
-        <div class="text-center mb-16 md:mb-24">
-            <h2 class="text-3xl md:text-5xl font-bold font-playfair mb-6 text-primary">Signature Selection</h2>
-            <div class="h-[1px] w-20 md:w-32 bg-gold mx-auto"></div>
-        </div>
-        
-        <div id="product-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-10">
-            <!-- Products Loaded From Firebase -->
-            <div class="col-span-full text-center py-20"><i class="fa-solid fa-spinner animate-spin text-gold text-3xl"></i></div>
+    <!-- 3. Minimal Brand Philosophy -->
+    <section class="py-32 bg-white border-y border-stone-100">
+        <div class="max-w-3xl mx-auto px-6 text-center">
+            <h2 class="text-2xl md:text-3xl font-luxury italic mb-8">“True wellness is the harmony of body, mind, and soul.”</h2>
+            <p class="text-primary/50 text-sm md:text-base leading-relaxed font-light">
+                Aarush Ayurveda is born from the desire to bring the sanctity of ancient Vedic rituals into the modern home. Every drop is a testament to purity, ethically sourced from the Himalayan foothills and crafted with divine intent. No chemicals, no shortcuts—only the power of nature.
+            </p>
         </div>
     </section>
 
-    <!-- Mobile Floating Cart -->
-    <button onclick="toggleCart()" class="md:hidden fixed bottom-6 right-6 z-50 bg-gold text-primary w-14 h-14 rounded-full shadow-[0_10px_30px_rgba(212,175,55,0.4)] flex items-center justify-center text-xl">
-        <i class="fa-solid fa-cart-shopping"></i>
-        <span id="cart-count-mobile" class="absolute -top-1 -right-1 bg-primary text-gold text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full">0</span>
-    </button>
-
-    <!-- Cart Drawer -->
-    <div id="cart-drawer" class="fixed inset-0 z-[100] invisible transition-all duration-500">
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="toggleCart()"></div>
-        <div class="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl transform translate-x-full transition-transform duration-500 flex flex-col">
-            <div class="p-6 md:p-8 border-b flex justify-between items-center bg-primary text-white">
-                <h3 class="text-xl md:text-2xl font-bold font-playfair">Your Selection</h3>
-                <button onclick="toggleCart()" class="text-2xl hover:text-gold transition">&times;</button>
-            </div>
-            <div id="cart-items" class="flex-1 overflow-y-auto p-6 md:p-8 space-y-6 no-scrollbar">
-                <!-- Items dynamic -->
-            </div>
-            <div class="p-6 md:p-8 border-t bg-stone-50">
-                <div class="flex justify-between items-center mb-6 text-xl md:text-2xl font-bold text-primary">
-                    <span class="font-playfair italic">Total</span>
-                    <span id="cart-total" class="text-gold font-playfair">₹0</span>
+    <!-- 4. Minimal Trust Strip -->
+    <section class="py-20 bg-white">
+        <div class="container mx-auto px-6 max-w-5xl">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+                <div class="space-y-3">
+                    <i class="fa-solid fa-leaf text-gold text-lg"></i>
+                    <p class="text-[10px] uppercase tracking-widest font-medium">100% Herbal</p>
                 </div>
-                <button onclick="showCheckout()" class="w-full bg-primary text-gold py-5 rounded-xl font-bold uppercase tracking-[0.2em] text-xs hover:bg-luxury transition-all">
+                <div class="space-y-3">
+                    <i class="fa-solid fa-scroll text-gold text-lg"></i>
+                    <p class="text-[10px] uppercase tracking-widest font-medium">Traditional Formula</p>
+                </div>
+                <div class="space-y-3">
+                    <i class="fa-solid fa-truck-fast text-gold text-lg"></i>
+                    <p class="text-[10px] uppercase tracking-widest font-medium">Global Delivery</p>
+                </div>
+                <div class="space-y-3">
+                    <i class="fa-solid fa-shield-check text-gold text-lg"></i>
+                    <p class="text-[10px] uppercase tracking-widest font-medium">Secure Payment</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5. Minimal Footer -->
+    <footer class="bg-primary text-white py-16">
+        <div class="container mx-auto px-6 max-w-6xl flex flex-col md:flex-row justify-between items-center gap-12">
+            <div class="text-center md:text-left">
+                <h3 class="text-xl font-luxury font-bold tracking-widest uppercase mb-4 text-gold">Aarush Ayurveda</h3>
+                <p class="text-white/40 text-[10px] max-w-xs leading-relaxed uppercase tracking-widest">
+                    The pinnacle of Ayurvedic luxury. Ethically sourced. Handcrafted. Divine.
+                </p>
+            </div>
+            <div class="flex gap-8 text-white/50 text-xs uppercase tracking-widest">
+                <a href="privacy.html" class="hover:text-gold transition">Privacy</a>
+                <a href="terms.html" class="hover:text-gold transition">Terms</a>
+                <a href="mailto:care@aarush.com" class="hover:text-gold transition">Concierge</a>
+            </div>
+        </div>
+        <div class="mt-16 text-center text-white/20 text-[9px] uppercase tracking-[0.4em]">
+            &copy; 2024 Aarush Ayurveda. All Rights Reserved.
+        </div>
+    </footer>
+
+    <!-- Cart Drawer (Kept intact but UI minimalized) -->
+    <div id="cart-drawer" class="fixed inset-0 z-[60] invisible transition-all duration-500">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="toggleCart()"></div>
+        <div id="cart-content" class="absolute right-0 top-0 h-full w-full max-w-sm bg-white shadow-2xl transform translate-x-full transition-transform duration-500 flex flex-col">
+            <div class="p-8 border-b border-stone-100 flex justify-between items-center">
+                <h3 class="text-lg font-luxury uppercase tracking-widest">Your Bag</h3>
+                <button onclick="toggleCart()" class="text-2xl hover:text-gold">&times;</button>
+            </div>
+            <div id="cart-items" class="flex-1 overflow-y-auto p-8 space-y-8">
+                <!-- Dynamic cart items -->
+            </div>
+            <div class="p-8 bg-stone-50 space-y-6">
+                <div class="flex justify-between items-center text-lg font-luxury italic">
+                    <span>Subtotal</span>
+                    <span id="cart-total" class="text-gold">₹0</span>
+                </div>
+                <button onclick="showCheckout()" class="w-full bg-primary text-gold py-4 rounded-full font-bold uppercase tracking-widest text-[10px] hover:bg-black transition-all">
                     Proceed to Checkout
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Checkout Modal -->
-    <div id="checkout-modal" class="fixed inset-0 z-[110] hidden flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-black/80 backdrop-blur-md" onclick="hideCheckout()"></div>
-        <div class="relative bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden max-h-[95vh] flex flex-col">
-            <div class="p-6 md:p-8 bg-primary text-white flex justify-between items-center">
-                <h3 class="text-2xl md:text-3xl font-bold font-playfair">Delivery Details</h3>
-                <button onclick="hideCheckout()" class="text-3xl hover:text-gold transition">&times;</button>
-            </div>
-            <form id="order-form" class="p-6 md:p-8 overflow-y-auto space-y-6 no-scrollbar">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="space-y-2">
-                        <label class="text-[10px] uppercase tracking-widest font-bold text-stone-400">Full Name</label>
-                        <input type="text" id="cust-name" required class="w-full p-4 border rounded-xl outline-none focus:ring-1 focus:ring-gold transition">
-                    </div>
-                    <div class="space-y-2">
-                        <label class="text-[10px] uppercase tracking-widest font-bold text-stone-400">Phone</label>
-                        <input type="tel" id="cust-phone" required class="w-full p-4 border rounded-xl outline-none focus:ring-1 focus:ring-gold transition">
-                    </div>
-                </div>
-                <div class="space-y-2">
-                    <label class="text-[10px] uppercase tracking-widest font-bold text-stone-400">Email Address</label>
-                    <input type="email" id="cust-email" required class="w-full p-4 border rounded-xl outline-none focus:ring-1 focus:ring-gold transition">
-                </div>
-                <div class="space-y-2">
-                    <label class="text-[10px] uppercase tracking-widest font-bold text-stone-400">Shipping Address</label>
-                    <textarea id="cust-address" required rows="3" class="w-full p-4 border rounded-xl outline-none focus:ring-1 focus:ring-gold transition"></textarea>
-                </div>
+    <!-- Checkout Modal (Minimal UI) -->
+    <div id="checkout-modal" class="fixed inset-0 z-[70] hidden flex items-center justify-center p-6 bg-primary/20 backdrop-blur-md">
+        <div class="bg-white w-full max-w-xl rounded-3xl p-10 shadow-2xl relative overflow-y-auto max-h-[90vh]">
+            <button onclick="hideCheckout()" class="absolute top-6 right-8 text-2xl">&times;</button>
+            <h2 class="text-2xl font-luxury mb-8 text-center italic">Delivery Details</h2>
+            <form id="order-form" class="space-y-6">
+                <input type="text" id="cust-name" placeholder="Full Name" required class="w-full p-4 border-b border-stone-200 outline-none focus:border-gold transition-colors font-light text-sm">
+                <input type="tel" id="cust-phone" placeholder="Phone Number" required class="w-full p-4 border-b border-stone-200 outline-none focus:border-gold transition-colors font-light text-sm">
+                <input type="email" id="cust-email" placeholder="Email Address" required class="w-full p-4 border-b border-stone-200 outline-none focus:border-gold transition-colors font-light text-sm">
+                <textarea id="cust-address" placeholder="Shipping Address" required rows="2" class="w-full p-4 border-b border-stone-200 outline-none focus:border-gold transition-colors font-light text-sm resize-none"></textarea>
                 
-                <div class="bg-stone-50 p-6 rounded-2xl border border-stone-100">
-                    <h4 class="font-bold mb-4 text-primary uppercase text-[10px] tracking-widest">Payment Method</h4>
-                    <div class="space-y-3">
-                        <label class="flex items-center space-x-3 cursor-pointer p-4 bg-white rounded-xl border border-gold/10 hover:border-gold transition">
-                            <input type="radio" name="payment" value="COD" checked class="accent-gold w-4 h-4">
-                            <span class="text-sm font-medium">Cash on Delivery</span>
-                        </label>
-                        <label class="flex items-center space-x-3 opacity-40 p-4 bg-white rounded-xl border border-transparent cursor-not-allowed">
-                            <input type="radio" name="payment" disabled class="accent-gold w-4 h-4">
-                            <span class="text-sm font-medium italic">Online Pay (Soon)</span>
-                        </label>
-                    </div>
+                <div class="py-4">
+                    <p class="text-[10px] uppercase tracking-[0.2em] font-bold text-stone-400 mb-4">Payment Method</p>
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        <input type="radio" name="payment" value="COD" checked class="accent-primary">
+                        <span class="text-xs font-medium tracking-widest uppercase">Cash on Delivery</span>
+                    </label>
                 </div>
 
-                <div id="checkout-summary" class="border-t pt-6 text-sm text-stone-600 space-y-2"></div>
+                <div id="checkout-summary" class="border-t border-stone-100 pt-6 space-y-2 text-[10px] text-stone-500 uppercase tracking-widest"></div>
 
-                <button type="submit" id="submit-btn" class="w-full bg-primary text-gold py-5 rounded-xl font-bold text-sm uppercase tracking-[0.2em] shadow-xl hover:bg-luxury transition-all flex justify-center items-center">
-                    <span>Confirm Order</span>
-                    <div id="loader" class="hidden ml-4 w-5 h-5 border-2 border-gold border-t-transparent rounded-full animate-spin"></div>
+                <button type="submit" id="submit-btn" class="w-full bg-primary text-gold py-4 rounded-full font-bold uppercase tracking-widest text-[10px] hover:bg-black transition-all shadow-lg flex justify-center items-center gap-4">
+                    Place Order
+                    <div id="loader" class="hidden w-4 h-4 border-2 border-gold border-t-transparent rounded-full animate-spin"></div>
                 </button>
             </form>
         </div>
     </div>
 
-    <!-- Success Modal -->
-    <div id="success-modal" class="fixed inset-0 z-[150] hidden flex items-center justify-center p-6 bg-primary/95 backdrop-blur-xl">
-        <div class="bg-white p-10 md:p-16 rounded-[40px] text-center max-w-lg shadow-2xl border border-gold/20">
-            <div class="w-20 h-20 bg-green-50 text-green-600 rounded-full flex items-center justify-center mx-auto mb-8 text-3xl shadow-inner">
+    <!-- Success Screen (Divine Minimalist) -->
+    <div id="success-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-6 bg-white">
+        <div class="text-center space-y-8">
+            <div class="w-20 h-20 bg-stone-50 text-gold rounded-full flex items-center justify-center mx-auto text-3xl">
                 <i class="fa-solid fa-check"></i>
             </div>
-            <h2 class="text-3xl md:text-4xl font-bold font-playfair text-primary mb-4">Namaste!</h2>
-            <p class="text-stone-500 mb-8 leading-relaxed">Your order <span id="success-oid" class="font-bold text-gold"></span> is confirmed. Our heritage concierge will contact you shortly.</p>
-            <button onclick="location.reload()" class="bg-primary text-gold px-12 py-4 rounded-full font-bold uppercase tracking-widest w-full hover:bg-luxury transition text-xs">Continue Shopping</button>
+            <h2 class="text-4xl font-luxury italic">Order Confirmed</h2>
+            <p class="text-stone-400 text-xs tracking-widest uppercase leading-loose">Your selection has been authorized. <br>Our concierge will reach out to you shortly.</p>
+            <p class="text-gold font-bold text-xs tracking-[0.3em] uppercase" id="success-oid"></p>
+            <button onclick="location.reload()" class="bg-primary text-gold px-12 py-4 rounded-full font-bold uppercase tracking-widest text-[10px] hover:bg-black transition-all">Back to Store</button>
         </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="bg-primary text-white/50 py-20 border-t border-gold/20">
-        <div class="container mx-auto px-4 md:px-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
-            <div class="lg:col-span-2">
-                <h3 class="text-white text-3xl font-bold mb-6 font-playfair tracking-widest uppercase">Aarush <span class="text-gold font-light">Ayurveda</span></h3>
-                <p class="max-w-md mb-8 leading-relaxed italic text-sm md:text-base">Dedicated to preserving the sacred traditions of Ayurveda through high-potency formulations and ethical sourcing practices.</p>
-                <div class="flex space-x-6 text-xl">
-                    <a href="#" class="hover:text-gold transition"><i class="fa-brands fa-instagram"></i></a>
-                    <a href="#" class="hover:text-gold transition"><i class="fa-brands fa-whatsapp"></i></a>
-                </div>
-            </div>
-            <div>
-                <h4 class="text-gold font-bold mb-6 uppercase tracking-[0.2em] text-[10px]">Information</h4>
-                <ul class="space-y-4 text-xs tracking-widest">
-                    <li><a href="privacy.html" class="hover:text-white transition uppercase">Privacy Policy</a></li>
-                    <li><a href="terms.html" class="hover:text-white transition uppercase">Terms & Conditions</a></li>
-                    <li><a href="#" class="hover:text-white transition uppercase">Shipping Policy</a></li>
-                </ul>
-            </div>
-            <div>
-                <h4 class="text-gold font-bold mb-6 uppercase tracking-[0.2em] text-[10px]">Medical Disclaimer</h4>
-                <p class="text-[10px] leading-relaxed opacity-60 font-light italic">
-                    "These products are not intended to diagnose, treat, cure, or prevent any disease. The information provided is for educational purposes only and should not replace professional medical advice."
-                </p>
-            </div>
-        </div>
-        <div class="container mx-auto px-4 mt-20 pt-8 border-t border-white/5 text-center text-[10px] uppercase tracking-[0.4em] font-medium">
-            &copy; 2024 Aarush Ayurveda. Crafted for the Divine.
-        </div>
-    </footer>
+    <!-- Floating Mobile Cart Icon (Only mobile) -->
+    <button onclick="toggleCart()" class="md:hidden fixed bottom-8 right-8 z-40 bg-primary text-gold w-14 h-14 rounded-full shadow-xl flex items-center justify-center text-xl">
+        <i class="fa-solid fa-cart-shopping"></i>
+        <span id="cart-count-mobile" class="absolute -top-1 -right-1 bg-gold text-primary text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full">0</span>
+    </button>
 
-    <!-- Firebase Compat SDK -->
+    <!-- Firebase Compat SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     <script src="script.js"></script>
