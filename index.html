@@ -5,26 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aarush Ayurveda | Premium Luxury Wellness</title>
     <meta name="description" content="Discover ancient wisdom refined for modern luxury. Authentic Ayurvedic formulations for holistic well-being.">
-    
-    <!-- Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Scripts -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
-    
     <script>
         tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#1b4332',
-                        gold: '#d4af37',
-                        luxury: '#143125'
-                    }
-                }
-            }
+            theme: { extend: { colors: { primary: '#1b4332', gold: '#d4af37', luxury: '#143125' } } }
         }
     </script>
 </head>
@@ -38,7 +25,7 @@
             </a>
             <div class="flex items-center space-x-8">
                 <a href="#products" class="hidden md:block hover:text-gold transition uppercase text-xs tracking-widest font-semibold">Collection</a>
-                <a href="admin.html" class="bg-white/10 px-4 py-1.5 rounded-full text-[10px] border border-white/20 uppercase tracking-widest hover:bg-gold hover:text-primary transition">Admin</a>
+                <!-- Admin button removed for security -->
                 <button onclick="toggleCart()" class="relative p-2 group">
                     <i class="fa-solid fa-bag-shopping text-xl text-gold group-hover:scale-110 transition-transform"></i>
                     <span id="cart-count" class="absolute -top-1 -right-1 bg-white text-primary text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full shadow-lg">0</span>
@@ -50,7 +37,7 @@
     <!-- Hero Section -->
     <section class="relative h-[85vh] flex items-center bg-luxury overflow-hidden">
         <div class="absolute inset-0 opacity-40">
-            <img src="https://images.unsplash.com/photo-1615485290382-441e4d019cb0?auto=format&fit=crop&q=80" class="w-full h-full object-cover">
+            <img src="https://images.unsplash.com/photo-1615485290382-441e4d019cb0?auto=format&fit=crop&q=80" class="w-full h-full object-cover" alt="Hero">
         </div>
         <div class="container mx-auto px-6 relative z-10 text-white">
             <h4 class="text-gold tracking-[0.4em] uppercase text-sm mb-4 font-semibold">Legacy of Healing</h4>
@@ -72,9 +59,7 @@
             <h2 class="text-4xl font-bold font-['Playfair_Display'] mb-4 text-primary">Signature Selection</h2>
             <div class="h-1 w-24 bg-gold mx-auto rounded-full"></div>
         </div>
-        
         <div id="product-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
-            <!-- Products Loaded From Firebase -->
             <div class="col-span-full text-center py-20 text-gray-400 italic">Curating nature's treasures...</div>
         </div>
     </section>
@@ -87,9 +72,7 @@
                 <h3 class="text-2xl font-bold font-['Playfair_Display']">Your Selection</h3>
                 <button onclick="toggleCart()" class="text-3xl hover:text-gold transition">&times;</button>
             </div>
-            <div id="cart-items" class="flex-1 overflow-y-auto p-8 space-y-6">
-                <!-- Items dynamic -->
-            </div>
+            <div id="cart-items" class="flex-1 overflow-y-auto p-8 space-y-6"></div>
             <div class="p-8 border-t bg-gray-50">
                 <div class="flex justify-between items-center mb-6 text-2xl font-bold text-primary">
                     <span>Subtotal</span>
@@ -117,7 +100,6 @@
                 </div>
                 <input type="email" id="cust-email" placeholder="Email Address" required class="w-full p-4 border rounded-xl outline-none focus:ring-2 focus:ring-gold transition">
                 <textarea id="cust-address" placeholder="Complete Shipping Address" required rows="3" class="w-full p-4 border rounded-xl outline-none focus:ring-2 focus:ring-gold transition"></textarea>
-                
                 <div class="bg-stone-100 p-6 rounded-2xl">
                     <h4 class="font-bold mb-4 text-primary uppercase text-xs tracking-widest">Payment Method</h4>
                     <div class="space-y-3">
@@ -131,9 +113,7 @@
                         </label>
                     </div>
                 </div>
-
                 <div id="checkout-summary" class="border-t pt-6 text-sm text-gray-600 space-y-2"></div>
-
                 <button type="submit" id="submit-btn" class="w-full bg-primary text-gold py-5 rounded-xl font-bold text-lg uppercase tracking-[0.2em] shadow-xl hover:bg-luxury transition-all flex justify-center items-center">
                     <span>Place Your Order</span>
                     <div id="loader" class="hidden ml-4 w-6 h-6 border-2 border-gold border-t-transparent rounded-full animate-spin"></div>
@@ -149,43 +129,34 @@
                 <i class="fa-solid fa-check"></i>
             </div>
             <h2 class="text-4xl font-bold font-['Playfair_Display'] text-primary mb-4">Namaste!</h2>
-            <p class="text-gray-500 mb-8 leading-relaxed">Your order <span id="success-oid" class="font-bold text-gold"></span> has been successfully placed. Our heritage concierge will contact you shortly.</p>
+            <p class="text-gray-500 mb-8 leading-relaxed">Your order <span id="success-oid" class="font-bold text-gold"></span> has been placed successfully.</p>
             <button onclick="location.reload()" class="bg-primary text-gold px-12 py-4 rounded-full font-bold uppercase tracking-widest w-full hover:bg-luxury transition">Return to Store</button>
         </div>
     </div>
 
-    <!-- Footer -->
     <footer class="bg-primary text-white/50 py-20 border-t border-gold/10">
-        <div class="container mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12">
+        <div class="container mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12 text-center md:text-left">
             <div class="md:col-span-2">
                 <h3 class="text-white text-3xl font-bold mb-6 font-['Playfair_Display'] uppercase tracking-widest">AARUSH <span class="text-gold font-light">AYURVEDA</span></h3>
-                <p class="max-w-md mb-8 leading-relaxed italic">Dedicated to preserving the sacred traditions of Ayurveda through high-potency formulations and ethical sourcing practices.</p>
-                <div class="flex space-x-6 text-xl">
-                    <a href="#" class="hover:text-gold transition"><i class="fa-brands fa-instagram"></i></a>
-                    <a href="#" class="hover:text-gold transition"><i class="fa-brands fa-whatsapp"></i></a>
-                </div>
+                <p class="max-w-md mb-8 leading-relaxed italic">Dedicated to preserving sacred traditions through high-potency formulations.</p>
             </div>
             <div>
                 <h4 class="text-gold font-bold mb-6 uppercase tracking-widest text-xs">Legal & Info</h4>
                 <ul class="space-y-4 text-sm">
                     <li><a href="privacy.html" class="hover:text-white transition">Privacy Policy</a></li>
                     <li><a href="terms.html" class="hover:text-white transition">Terms & Conditions</a></li>
-                    <li><a href="#" class="hover:text-white transition">Shipping Policy</a></li>
                 </ul>
             </div>
             <div>
                 <h4 class="text-gold font-bold mb-6 uppercase tracking-widest text-xs">Medical Disclaimer</h4>
-                <p class="text-[10px] leading-relaxed opacity-60 font-light italic">
-                    "These products are not intended to diagnose, treat, cure, or prevent any disease. The information provided is for educational purposes only and should not replace professional medical advice."
-                </p>
+                <p class="text-[10px] leading-relaxed opacity-60 font-light italic">"Products not intended to diagnose, treat, cure, or prevent any disease."</p>
             </div>
         </div>
-        <div class="container mx-auto px-6 mt-20 pt-8 border-t border-white/5 text-center text-[10px] uppercase tracking-[0.3em] font-medium">
-            &copy; 2024 Aarush Ayurveda. All Rights Reserved. Crafted for Excellence.
+        <div class="container mx-auto px-6 mt-20 pt-8 border-t border-white/5 text-center text-[10px] uppercase tracking-[0.3em]">
+            &copy; 2024 Aarush Ayurveda. Crafted for Excellence.
         </div>
     </footer>
 
-    <!-- Firebase Compat SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     <script src="script.js"></script>
