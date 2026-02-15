@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Checkout</title>
+<title>Checkout - Aarush Ayurveda</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<h2>Place Your Order</h2>
+<h2 style="text-align:center;">Place Your Order 🌿</h2>
 
 <form id="orderForm">
 
@@ -20,17 +20,88 @@
 
 </form>
 
-<script>
+<script type="module">
+
+// ===== FIREBASE IMPORT =====
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+
+// ===== FIREBASE CONFIG =====
+const firebaseConfig = {
+  databaseURL: "https://ship-53cd8-default-rtdb.firebaseio.com/"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+
+// ===== TELEGRAM FUNCTION =====
+async function sendTelegram(data) {
+
+  const text = `
+🛒 New Order Received
+
+👤 Name: ${data.name}
+📱 Mobile: ${data.phone}
+🏠 Address: ${data.address}
+
+🌿 Product: Herbal Immunity Powder
+💰 Price: ₹499
+`;
+
+  const BOT_TOKEN = "8519947258:AAGJzcVNkJXGndbc1O9C2e_rNgQWAleNhFY";
+  const CHAT_ID = "6820660513";
+
+  const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+
+  await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      chat_id: CHAT_ID,
+      text: text
+    })
+  });
+}
+
+
+// ===== FORM SUBMIT =====
 document.getElementById("orderForm")
-.addEventListener("submit", function(e){
+.addEventListener("submit", async function(e){
 
-e.preventDefault();
+  e.preventDefault();
 
-alert("Order Received! We will contact you shortly.");
+  const data = {
+    name: document.getElementById("name").value,
+    phone: document.getElementById("phone").value,
+    address: document.getElementById("address").value,
+    product: "Herbal Immunity Powder",
+    price: 499,
+    time: new Date().toLocaleString("en-IN")
+  };
 
-document.getElementById("orderForm").reset();
+  try {
+
+    // 1️⃣ Firebase Save
+    await push(ref(db, "orders"), data);
+
+    // 2️⃣ Telegram Alert
+    await sendTelegram(data);
+
+    alert("Order Received Successfully 🌿");
+
+    document.getElementById("orderForm").reset();
+
+  } catch(err) {
+
+    alert("Error: " + err.message);
+    console.log(err);
+
+  }
 
 });
+
 </script>
 
 </body>
