@@ -16,6 +16,9 @@ const db = firebase.database();
 
 const ADMIN_CREDS = { mobile: "7627055204", pass: "Aarush@2025" };
 
+let allOrders = [];
+let productCache = {};
+
 // ==========================
 // LOGIN SYSTEM
 // ==========================
@@ -52,14 +55,31 @@ function logoutAdmin() {
 }
 
 // ==========================
-// DASHBOARD INIT
+// INITIALIZE DASHBOARD
 // ==========================
-let allOrders = [];
-let productCache = {};
-
 function initializeDashboard() {
     fetchOrders();
     fetchProducts();
+    switchTab('orders'); // default tab
+}
+
+// ==========================
+// TAB SWITCH
+// ==========================
+function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('border-b-2','border-gold','text-primary');
+    });
+
+    document.querySelectorAll('.tab-content').forEach(sec => {
+        sec.classList.add('hidden');
+    });
+
+    document.getElementById('tab-' + tab)
+        .classList.add('border-b-2','border-gold','text-primary');
+
+    document.getElementById('section-' + tab)
+        .classList.remove('hidden');
 }
 
 // ==========================
@@ -118,43 +138,38 @@ function renderOrders(orders) {
             const shortId = (o.orderId || o.id).slice(-6);
 
             rows.innerHTML += `
-                <tr class="hover:bg-stone-50 transition">
-                    <td class="p-6">
-                        <div class="text-xs font-bold text-primary tracking-widest">#${shortId}</div>
-                        <div class="text-[10px] text-stone-400 mt-1">${o.time || ''}</div>
-                    </td>
-                    <td class="p-6">
-                        <div class="font-bold">${o.name}</div>
-                        <div class="text-[10px] text-stone-400 uppercase tracking-widest">${o.phone}</div>
-                    </td>
-                    <td class="p-6 text-[10px] italic">
-                        ${Array.isArray(o.items) ? o.items.map(i => `${i.name} (x${i.quantity})`).join(', ') : o.items}
-                    </td>
-                    <td class="p-6 font-bold text-primary">₹${Number(o.total || 0)}</td>
-                    <td class="p-6">
-                        <span class="px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest badge-${o.status}">
-                            ${o.status}
-                        </span>
-                    </td>
-                    <td class="p-6">
-                        <div class="flex flex-wrap justify-center gap-2">
-                            <button onclick="updateStatus('${o.id}', 'Processing')" class="bg-blue-50 text-blue-600 px-3 py-1 rounded-lg text-[9px] font-bold uppercase">Process</button>
-                            <button onclick="updateStatus('${o.id}', 'Shipped')" class="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-lg text-[9px] font-bold uppercase">Ship</button>
-                            <button onclick="updateStatus('${o.id}', 'Delivered')" class="bg-purple-50 text-purple-600 px-3 py-1 rounded-lg text-[9px] font-bold uppercase">Delv</button>
-                            <button onclick="updateStatus('${o.id}', 'Cancelled')" class="bg-rose-50 text-rose-600 px-3 py-1 rounded-lg text-[9px] font-bold uppercase">X</button>
-                        </div>
-                    </td>
-                    <td class="p-6 text-center">
-                        <div class="flex items-center justify-center space-x-4">
-                            <a href="https://wa.me/91${(o.phone || '').replace(/\D/g,'')}" target="_blank" class="text-emerald-500">
-                                <i class="fa-brands fa-whatsapp text-lg"></i>
-                            </a>
-                            <button onclick="deleteOrder('${o.id}')" class="text-rose-400">
-                                <i class="fa-solid fa-trash-can"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>`;
+            <tr class="hover:bg-stone-50 transition">
+                <td class="p-6">
+                    <div class="text-xs font-bold text-primary tracking-widest">#${shortId}</div>
+                    <div class="text-[10px] text-stone-400 mt-1">${o.time || ''}</div>
+                </td>
+                <td class="p-6">
+                    <div class="font-bold">${o.name}</div>
+                    <div class="text-[10px] text-stone-400 uppercase tracking-widest">${o.phone}</div>
+                </td>
+                <td class="p-6 text-[10px] italic">
+                    ${Array.isArray(o.items) ? o.items.map(i => `${i.name} (x${i.quantity})`).join(', ') : o.items}
+                </td>
+                <td class="p-6 font-bold text-primary">₹${Number(o.total || 0)}</td>
+                <td class="p-6">
+                    <span class="px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest">
+                        ${o.status}
+                    </span>
+                </td>
+                <td class="p-6">
+                    <div class="flex flex-wrap justify-center gap-2">
+                        <button onclick="updateStatus('${o.id}','Processing')" class="bg-blue-50 text-blue-600 px-3 py-1 rounded-lg text-[9px] font-bold uppercase">Process</button>
+                        <button onclick="updateStatus('${o.id}','Shipped')" class="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-lg text-[9px] font-bold uppercase">Ship</button>
+                        <button onclick="updateStatus('${o.id}','Delivered')" class="bg-purple-50 text-purple-600 px-3 py-1 rounded-lg text-[9px] font-bold uppercase">Delv</button>
+                        <button onclick="updateStatus('${o.id}','Cancelled')" class="bg-rose-50 text-rose-600 px-3 py-1 rounded-lg text-[9px] font-bold uppercase">X</button>
+                    </div>
+                </td>
+                <td class="p-6 text-center">
+                    <a href="https://wa.me/91${(o.phone||'').replace(/\D/g,'')}" target="_blank" class="text-emerald-500">
+                        <i class="fa-brands fa-whatsapp text-lg"></i>
+                    </a>
+                </td>
+            </tr>`;
         });
 }
 
@@ -167,8 +182,8 @@ function updateStatus(id, newStatus) {
 
         const shortId = (o.orderId || id).slice(-6);
         const msg = `Namaste ${o.name} ji 🙏\nAapka order ID: #${shortId}\nAb status: ${newStatus}\nDhanyavaad 🙏\nAarush Ayurveda`;
+        const phone = (o.phone||'').replace(/\D/g,'');
 
-        const phone = (o.phone || '').replace(/\D/g, '');
         window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`, '_blank');
     });
 }
@@ -181,23 +196,17 @@ function deleteOrder(id) {
 function filterOrders() { renderOrders(allOrders); }
 
 // ==========================
-// PRODUCT MANAGEMENT (STABLE)
+// PRODUCT MANAGEMENT
 // ==========================
 function fetchProducts() {
     db.ref('products').off();
-
     db.ref('products').on('value', snap => {
         const data = snap.val();
         const list = document.getElementById('product-rows');
         list.innerHTML = '';
 
         if (!data) {
-            list.innerHTML = `
-                <tr>
-                    <td colspan="4" class="p-6 text-center text-gray-400">
-                        No products found
-                    </td>
-                </tr>`;
+            list.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-gray-400">No products found</td></tr>`;
             productCache = {};
             return;
         }
@@ -208,23 +217,23 @@ function fetchProducts() {
             const p = data[id];
 
             list.innerHTML += `
-                <tr class="hover:bg-stone-50 transition">
-                    <td class="p-6 flex items-center space-x-4">
-                        <img src="${p.image}" class="w-10 h-10 object-cover rounded-lg shadow-sm">
-                        <div class="font-bold text-sm text-primary">${p.name}</div>
-                    </td>
-                    <td class="p-6 font-bold text-gold text-sm">₹${Number(p.price)}</td>
-                    <td class="p-6 text-center">
-                        <span class="px-3 py-1 rounded-full text-[10px] font-bold 
-                        ${p.stock < 5 ? 'bg-rose-100 text-rose-600' : 'bg-emerald-100 text-emerald-600'}">
-                        ${p.stock}
-                        </span>
-                    </td>
-                    <td class="p-6 text-center">
-                        <button onclick="editProduct('${id}')" class="text-blue-400 mr-3"><i class="fa-solid fa-pen"></i></button>
-                        <button onclick="deleteProduct('${id}')" class="text-rose-400"><i class="fa-solid fa-trash"></i></button>
-                    </td>
-                </tr>`;
+            <tr class="hover:bg-stone-50 transition">
+                <td class="p-6 flex items-center space-x-4">
+                    <img src="${p.image}" class="w-10 h-10 object-cover rounded-lg shadow-sm">
+                    <div class="font-bold text-sm text-primary">${p.name}</div>
+                </td>
+                <td class="p-6 font-bold text-gold text-sm">₹${Number(p.price)}</td>
+                <td class="p-6 text-center">
+                    <span class="px-3 py-1 rounded-full text-[10px] font-bold 
+                    ${p.stock < 5 ? 'bg-rose-100 text-rose-600' : 'bg-emerald-100 text-emerald-600'}">
+                    ${p.stock}
+                    </span>
+                </td>
+                <td class="p-6 text-center">
+                    <button onclick="editProduct('${id}')" class="text-blue-400 mr-3"><i class="fa-solid fa-pen"></i></button>
+                    <button onclick="deleteProduct('${id}')" class="text-rose-400"><i class="fa-solid fa-trash"></i></button>
+                </td>
+            </tr>`;
         });
     });
 }
