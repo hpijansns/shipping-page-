@@ -3,171 +3,218 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Aarush Ayurveda - Premium Luxury Ayurvedic Wellness. Experience the purity of ancient wisdom with our modern wellness solutions.">
-    <meta property="og:title" content="Aarush Ayurveda | Premium Wellness">
-    <meta property="og:description" content="Ancient Wisdom, Modern Luxury. Discover our range of herbal formulations.">
-    <title>Aarush Ayurveda | Luxury Wellness Store</title>
+    <title>Aarush Ayurveda | Premium Ayurvedic Wellness</title>
+    <meta name="description" content="Discover the luxury of ancient wisdom. Premium Ayurvedic formulations for holistic well-being.">
     
-    <!-- Fonts & Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
+    <!-- OG Tags -->
+    <meta property="og:title" content="Aarush Ayurveda">
+    <meta property="og:description" content="Premium Ayurvedic Wellness store.">
+    <meta property="og:type" content="website">
 
-    <!-- Navigation -->
-    <nav class="navbar shadow-lg">
-        <div class="nav-container container">
-            <a href="index.html" class="logo">AARUSH <span>AYURVEDA</span></a>
-            <div class="nav-links">
-                <a href="#products">Collection</a>
-                <a href="admin.html" class="admin-link"><i class="fas fa-user-shield"></i></a>
-                <div class="cart-trigger" onclick="toggleCart(true)">
-                    <i class="fas fa-shopping-bag"></i>
-                    <span id="cart-count">0</span>
-                </div>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Tailwind & AOS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="style.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1b4332',
+                        gold: '#d4af37',
+                        accent: '#2d6a4f',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-stone-50 text-gray-800 font-['Poppins'] overflow-x-hidden">
+
+    <!-- Sticky Navbar -->
+    <nav class="sticky top-0 z-50 bg-primary text-white py-4 shadow-2xl">
+        <div class="container mx-auto px-6 flex justify-between items-center">
+            <a href="index.html" class="text-2xl font-bold tracking-tight text-gold font-['Playfair_Display']">
+                AARUSH <span class="text-white font-light">AYURVEDA</span>
+            </a>
+            <div class="flex items-center space-x-8">
+                <a href="#products" class="hidden md:block hover:text-gold transition">Collection</a>
+                <a href="admin.html" class="hidden md:block hover:text-gold transition text-xs border border-gold/30 px-3 py-1 rounded">Admin</a>
+                <button onclick="toggleCart()" class="relative p-2">
+                    <i class="fa-solid fa-bag-shopping text-xl text-gold"></i>
+                    <span id="cart-count" class="absolute -top-1 -right-1 bg-white text-primary text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full shadow-lg">0</span>
+                </button>
             </div>
         </div>
     </nav>
 
     <!-- Hero Section -->
-    <section class="hero">
-        <div class="hero-overlay"></div>
-        <div class="hero-content container" data-aos="fade-up">
-            <h1>Ancient Wisdom <br><span class="gold-text">Modern Luxury</span></h1>
-            <p>Crafting the purest Ayurvedic formulations for your holistic well-being. Ethically sourced, scientifically refined.</p>
-            <a href="#products" class="btn-primary">Explore Collection</a>
+    <section class="relative h-[85vh] flex items-center overflow-hidden">
+        <div class="absolute inset-0 bg-black/40 z-10"></div>
+        <img src="https://images.unsplash.com/photo-1615485290382-441e4d019cb0?auto=format&fit=crop&q=80" class="absolute inset-0 w-full h-full object-cover scale-105 animate-slow-zoom" alt="Ayurveda Background">
+        <div class="container mx-auto px-6 relative z-20 text-white" data-aos="fade-up">
+            <h1 class="text-5xl md:text-7xl font-bold mb-6 font-['Playfair_Display'] leading-tight">
+                Ancient Wisdom, <br><span class="text-gold">Modern Luxury</span>
+            </h1>
+            <p class="text-lg md:text-xl max-w-2xl mb-10 font-light opacity-90">
+                Experience the purest Ayurvedic formulations crafted with heritage techniques and modern scientific precision.
+            </p>
+            <a href="#products" class="bg-gold hover:bg-white text-primary px-10 py-4 rounded-full font-bold uppercase tracking-widest transition-all duration-300 transform hover:scale-105 inline-block">
+                Shop Collection
+            </a>
         </div>
     </section>
 
-    <!-- Products Section -->
-    <section id="products" class="products container">
-        <div class="section-header" data-aos="fade-up">
-            <h2>Our Signature Collection</h2>
-            <div class="divider"></div>
+    <!-- Product Grid -->
+    <section id="products" class="py-24 container mx-auto px-6">
+        <div class="text-center mb-16" data-aos="fade-up">
+            <h2 class="text-4xl font-bold text-primary font-['Playfair_Display'] mb-4">Signature Essentials</h2>
+            <div class="h-1 w-24 bg-gold mx-auto rounded-full"></div>
         </div>
-        <div id="product-grid" class="product-grid">
-            <!-- Products dynamic load -->
-            <div class="loader"></div>
-        </div>
-    </section>
-
-    <!-- Testimonials -->
-    <section class="testimonials">
-        <div class="container">
-            <h2 class="text-center gold-text mb-4">Client Experiences</h2>
-            <div class="testimonial-grid">
-                <div class="testimonial-card" data-aos="zoom-in">
-                    <p>"The quality is unmatched. My skin has never felt better."</p>
-                    <span>- Aditi Sharma</span>
-                </div>
-                <div class="testimonial-card" data-aos="zoom-in" data-aos-delay="100">
-                    <p>"Authentic Ayurvedic products with premium packaging."</p>
-                    <span>- Rajesh Iyer</span>
-                </div>
-            </div>
+        
+        <div id="product-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            <!-- Dynamic Products -->
+            <div class="col-span-full text-center py-20 text-gray-400">Loading treasures...</div>
         </div>
     </section>
 
-    <!-- FAQ -->
-    <section class="faq container">
-        <h2 class="text-center mb-4">Common Questions</h2>
-        <div class="faq-item">
-            <details>
-                <summary>Are these products 100% natural?</summary>
-                <p>Yes, all Aarush Ayurveda products are made from ethically sourced natural herbs without harmful chemicals.</p>
-            </details>
-        </div>
-        <div class="faq-item">
-            <details>
-                <summary>How long does delivery take?</summary>
-                <p>Standard delivery takes 3-5 business days across India.</p>
-            </details>
-        </div>
-    </section>
+    <!-- Floating Mobile Cart -->
+    <button onclick="toggleCart()" class="fixed bottom-6 right-6 md:hidden z-40 bg-gold text-primary w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-xl">
+        <i class="fa-solid fa-cart-shopping"></i>
+    </button>
 
     <!-- Cart Drawer -->
-    <div id="cart-drawer" class="cart-drawer">
-        <div class="cart-overlay" onclick="toggleCart(false)"></div>
-        <div class="cart-content">
-            <div class="cart-header">
-                <h3>Your Bag</h3>
-                <button onclick="toggleCart(false)">&times;</button>
+    <div id="cart-drawer" class="fixed inset-0 z-[60] invisible transition-all duration-300">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="toggleCart()"></div>
+        <div class="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl transform translate-x-full transition-transform duration-300 flex flex-col">
+            <div class="p-6 border-b flex justify-between items-center bg-primary text-white">
+                <h3 class="text-xl font-bold font-['Playfair_Display']">Your Selection</h3>
+                <button onclick="toggleCart()" class="text-2xl hover:text-gold">&times;</button>
             </div>
-            <div id="cart-items" class="cart-items-list">
-                <!-- Cart items dynamic -->
+            <div id="cart-items" class="flex-1 overflow-y-auto p-6 space-y-6">
+                <!-- Items here -->
             </div>
-            <div class="cart-footer">
-                <div class="cart-total">
-                    <span>Total:</span>
-                    <span id="cart-total-amount">₹0</span>
+            <div class="p-6 border-t bg-gray-50">
+                <div class="flex justify-between items-center mb-6 text-xl font-bold text-primary">
+                    <span>Total</span>
+                    <span id="cart-total">₹0</span>
                 </div>
-                <button onclick="openCheckout()" class="btn-checkout">Proceed to Checkout</button>
+                <button onclick="showCheckout()" class="w-full bg-gold text-primary py-4 rounded-lg font-bold uppercase tracking-widest hover:bg-primary hover:text-white transition-all">
+                    Proceed to Checkout
+                </button>
             </div>
         </div>
     </div>
 
     <!-- Checkout Modal -->
-    <div id="checkout-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="closeCheckout()">&times;</span>
-            <h2>Order Details</h2>
-            <form id="checkout-form">
-                <div class="form-group">
-                    <input type="text" id="cust-name" placeholder="Full Name" required>
+    <div id="checkout-modal" class="fixed inset-0 z-[70] hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-md" onclick="hideCheckout()"></div>
+        <div class="relative bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+            <div class="p-6 bg-primary text-white flex justify-between items-center">
+                <h3 class="text-2xl font-bold font-['Playfair_Display']">Delivery Details</h3>
+                <button onclick="hideCheckout()" class="text-2xl">&times;</button>
+            </div>
+            <form id="order-form" class="p-8 overflow-y-auto space-y-6">
+                <div class="grid md:grid-cols-2 gap-6">
+                    <input type="text" id="cust-name" placeholder="Full Name" required class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-gold outline-none">
+                    <input type="tel" id="cust-phone" placeholder="Phone Number" required class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-gold outline-none">
                 </div>
-                <div class="form-group">
-                    <input type="tel" id="cust-phone" placeholder="Phone Number" required>
+                <input type="email" id="cust-email" placeholder="Email Address" required class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-gold outline-none">
+                <textarea id="cust-address" placeholder="Complete Shipping Address" required rows="3" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-gold outline-none"></textarea>
+                
+                <div class="bg-stone-100 p-6 rounded-xl">
+                    <h4 class="font-bold mb-4 text-primary">Payment Method</h4>
+                    <div class="space-y-3">
+                        <label class="flex items-center space-x-3 cursor-pointer p-3 bg-white rounded-lg border hover:border-gold transition">
+                            <input type="radio" name="payment" value="COD" checked class="accent-gold w-4 h-4">
+                            <span class="font-medium">Cash on Delivery</span>
+                        </label>
+                        <label class="flex items-center space-x-3 opacity-50 p-3 bg-white rounded-lg border cursor-not-allowed">
+                            <input type="radio" name="payment" disabled class="accent-gold w-4 h-4">
+                            <span class="font-medium">Online Payment (Razorpay - Coming Soon)</span>
+                        </label>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <input type="email" id="cust-email" placeholder="Email Address" required>
+
+                <div id="order-summary" class="border-t pt-6 text-sm text-gray-600 space-y-2">
+                    <!-- Summary dynamic -->
                 </div>
-                <div class="form-group">
-                    <textarea id="cust-address" placeholder="Complete Shipping Address" required></textarea>
-                </div>
-                <div class="payment-selection">
-                    <p>Payment Method:</p>
-                    <label><input type="radio" name="payment" value="COD" checked> Cash on Delivery</label>
-                    <label class="disabled-label"><input type="radio" name="payment" value="Razorpay" disabled> Online Payment (Coming Soon)</label>
-                </div>
-                <div id="checkout-summary" class="checkout-summary"></div>
-                <button type="submit" id="place-order-btn" class="btn-primary w-100">Place Order</button>
+
+                <button type="submit" id="submit-btn" class="w-full bg-primary text-gold py-4 rounded-lg font-bold text-lg uppercase shadow-xl hover:shadow-gold/20 transition-all flex justify-center items-center">
+                    <span>Place Order</span>
+                    <div id="loader" class="hidden ml-3 w-5 h-5 border-2 border-gold border-t-transparent rounded-full animate-spin"></div>
+                </button>
             </form>
         </div>
     </div>
 
+    <!-- Testimonials -->
+    <section class="bg-primary py-24 text-white overflow-hidden">
+        <div class="container mx-auto px-6">
+            <h2 class="text-4xl font-bold text-gold text-center font-['Playfair_Display'] mb-16">Client Experiences</h2>
+            <div class="grid md:grid-cols-3 gap-10">
+                <div class="p-8 bg-white/5 rounded-2xl border border-white/10" data-aos="fade-up">
+                    <p class="italic mb-6 opacity-80">"The Hair Vitalizer is magic. Within 3 weeks, my hair texture improved significantly. Pure luxury."</p>
+                    <div class="font-bold text-gold">— Ananya Sharma</div>
+                </div>
+                <div class="p-8 bg-white/5 rounded-2xl border border-white/10" data-aos="fade-up" data-aos-delay="100">
+                    <p class="italic mb-6 opacity-80">"Authentic taste and packaging. The Shilajit is the highest quality I've ever found online."</p>
+                    <div class="font-bold text-gold">— Dr. Vikram Mehta</div>
+                </div>
+                <div class="p-8 bg-white/5 rounded-2xl border border-white/10" data-aos="fade-up" data-aos-delay="200">
+                    <p class="italic mb-6 opacity-80">"Aarush Ayurveda bridges the gap between ancient heritage and modern high-end skin care."</p>
+                    <div class="font-bold text-gold">— Priya Kapoor</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Footer -->
-    <footer class="footer">
-        <div class="container footer-grid">
-            <div>
-                <h3>Aarush Ayurveda</h3>
-                <p>Elevating wellness through the purity of nature.</p>
+    <footer class="bg-stone-900 text-stone-400 py-16 border-t border-white/5">
+        <div class="container mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12">
+            <div class="col-span-1 md:col-span-2">
+                <h3 class="text-white text-2xl font-bold mb-6 font-['Playfair_Display']">AARUSH <span class="text-gold">AYURVEDA</span></h3>
+                <p class="max-w-sm mb-6 leading-relaxed">Dedicated to preserving the sacred traditions of Ayurveda while delivering premium wellness to the modern world.</p>
+                <div class="flex space-x-4 text-xl">
+                    <a href="#" class="hover:text-gold transition"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" class="hover:text-gold transition"><i class="fa-brands fa-facebook"></i></a>
+                    <a href="#" class="hover:text-gold transition"><i class="fa-brands fa-whatsapp"></i></a>
+                </div>
             </div>
             <div>
-                <h4>Legal</h4>
-                <ul>
-                    <li><a href="#">Privacy Policy</a></li>
-                    <li><a href="#">Terms & Conditions</a></li>
+                <h4 class="text-white font-bold mb-6 uppercase tracking-widest text-sm">Quick Links</h4>
+                <ul class="space-y-4 text-sm">
+                    <li><a href="#" class="hover:text-gold transition">Privacy Policy</a></li>
+                    <li><a href="#" class="hover:text-gold transition">Terms & Conditions</a></li>
+                    <li><a href="#" class="hover:text-gold transition">Shipping Policy</a></li>
                 </ul>
             </div>
             <div>
-                <h4>Disclaimer</h4>
-                <p class="disclaimer-text">These products are not intended to diagnose, treat, cure, or prevent any disease. Consult a healthcare professional before use.</p>
+                <h4 class="text-white font-bold mb-6 uppercase tracking-widest text-sm">Medical Disclaimer</h4>
+                <p class="text-[10px] leading-relaxed opacity-60">These products are not intended to diagnose, treat, cure, or prevent any disease. Consult a healthcare professional before use.</p>
             </div>
         </div>
-        <div class="text-center mt-4">
-            <p>&copy; 2024 Aarush Ayurveda. All Rights Reserved.</p>
+        <div class="container mx-auto px-6 mt-16 pt-8 border-t border-white/5 text-center text-xs">
+            &copy; 2024 Aarush Ayurveda. All Rights Reserved. Crafted for Excellence.
         </div>
     </footer>
 
-    <!-- Firebase -->
+    <!-- Firebase Compat -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
-    <!-- Animation -->
+    
+    <!-- Scripts -->
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-    <!-- Core JS -->
     <script src="script.js"></script>
-    <script>AOS.init();</script>
+    <script>AOS.init({ duration: 1000, once: true });</script>
 </body>
 </html>
