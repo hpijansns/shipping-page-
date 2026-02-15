@@ -3,22 +3,19 @@
 <head>
 <title>Checkout - Aarush Ayurveda</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<h2 style="text-align:center;">Place Your Order 🌿</h2>
+<h2>Place Your Order 🌿</h2>
 
 <form id="orderForm">
-
-  <input id="name" placeholder="Full Name" required>
-  <input id="phone" placeholder="Mobile Number" required>
-  <textarea id="address" placeholder="Full Address" required></textarea>
-
+  <input id="name" placeholder="Full Name" required><br><br>
+  <input id="phone" placeholder="Mobile Number" required><br><br>
+  <textarea id="address" placeholder="Full Address" required></textarea><br><br>
   <button type="submit">Place Order</button>
-
 </form>
+
 
 <script type="module">
 
@@ -27,9 +24,16 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 
-// ===== FIREBASE CONFIG =====
+// ===== YOUR FIREBASE CONFIG =====
 const firebaseConfig = {
-  databaseURL: "https://ship-53cd8-default-rtdb.firebaseio.com/"
+  apiKey: "AIzaSyBXVrbfucAyj9wud-sY2BaO2mLO8JaeeQE",
+  authDomain: "ship-53cd8.firebaseapp.com",
+  databaseURL: "https://ship-53cd8-default-rtdb.firebaseio.com",
+  projectId: "ship-53cd8",
+  storageBucket: "ship-53cd8.firebasestorage.app",
+  messagingSenderId: "682363394250",
+  appId: "1:682363394250:web:705c36de45058f4a26bc33",
+  measurementId: "G-CR4G2C74QJ"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -45,9 +49,6 @@ async function sendTelegram(data) {
 👤 Name: ${data.name}
 📱 Mobile: ${data.phone}
 🏠 Address: ${data.address}
-
-🌿 Product: Herbal Immunity Powder
-💰 Price: ₹499
 `;
 
   const BOT_TOKEN = "8519947258:AAGJzcVNkJXGndbc1O9C2e_rNgQWAleNhFY";
@@ -76,8 +77,6 @@ document.getElementById("orderForm")
     name: document.getElementById("name").value,
     phone: document.getElementById("phone").value,
     address: document.getElementById("address").value,
-    product: "Herbal Immunity Powder",
-    price: 499,
     time: new Date().toLocaleString("en-IN")
   };
 
@@ -89,7 +88,7 @@ document.getElementById("orderForm")
     // 2️⃣ Telegram Alert
     await sendTelegram(data);
 
-    alert("Order Received Successfully 🌿");
+    alert("Order Saved Successfully 🌿");
 
     document.getElementById("orderForm").reset();
 
