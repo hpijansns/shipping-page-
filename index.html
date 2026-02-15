@@ -1,111 +1,46 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Lead Form</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Aarush Ayurveda</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
-<h2>Contact Form</h2>
+<header>
+  <h1>Aarush Ayurveda 🌿</h1>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="#products">Products</a>
+    <a href="#contact">Contact</a>
+  </nav>
+</header>
 
-<form id="leadForm">
+<section class="hero">
+  <h2>Pure Handmade Ayurvedic Wellness</h2>
+  <p>Traditional ingredients • Small batch • Natural care</p>
+  <a href="#products" class="btn">Shop Now</a>
+</section>
 
-  <input id="name" placeholder="Name" required /><br><br>
+<section id="products" class="products">
+  <div class="product-card">
+    <img src="https://via.placeholder.com/250" alt="Herbal Powder">
+    <h3>Herbal Immunity Powder</h3>
+    <p>100% Natural Ayurvedic Blend</p>
+    <p class="price">₹499</p>
+    <a href="product.html" class="btn">View Product</a>
+  </div>
+</section>
 
-  <input id="phone" placeholder="Mobile Number" required /><br><br>
+<section id="contact" class="contact">
+  <h3>Need Help?</h3>
+  <p>Email: support@aarushayurveda.com</p>
+  <p>Phone: +91 XXXXX XXXXX</p>
+</section>
 
-  <input id="email" placeholder="Email" required /><br><br>
-
-  <textarea id="msg" placeholder="Message"></textarea><br><br>
-
-  <button type="submit">Save</button>
-
-</form>
-
-
-<script type="module">
-
-// ===== FIREBASE IMPORT =====
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-
-
-// ===== FIREBASE CONFIG (Aapka) =====
-const firebaseConfig = {
-  databaseURL: "https://ship-53cd8-default-rtdb.firebaseio.com/"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-
-
-// ===== TELEGRAM FUNCTION =====
-async function sendTelegram(data) {
-
-  const text = `
-🔥 New Website Lead
-
-👤 Name: ${data.name}
-📱 Mobile: ${data.phone}
-📧 Email: ${data.email}
-
-📝 Message:
-${data.message}
-`;
-
-  const BOT_TOKEN = "8519947258:AAGJzcVNkJXGndbc1O9C2e_rNgQWAleNhFY";
-  const CHAT_ID = "6820660513";
-
-  const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
-
-  await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      chat_id: CHAT_ID,
-      text: text
-    })
-  });
-}
-
-
-// ===== FORM SUBMIT LOGIC =====
-document.getElementById("leadForm")
-.addEventListener("submit", async function(e) {
-
-  e.preventDefault();
-
-  const data = {
-    name: document.getElementById("name").value,
-    phone: document.getElementById("phone").value,
-    email: document.getElementById("email").value,
-    message: document.getElementById("msg").value,
-    time: new Date().toLocaleString("en-IN")
-  };
-
-  try {
-
-    // 1. Firebase me save
-    await push(ref(db, "leads"), data);
-
-    // 2. Telegram par alert
-    await sendTelegram(data);
-
-    alert("Data Save Ho Gaya 👍");
-
-    document.getElementById("leadForm").reset();
-
-  } catch(err) {
-
-    alert("Error: " + err.message);
-    console.log(err);
-
-  }
-
-});
-
-</script>
+<footer>
+  <p>© 2026 Aarush Ayurveda. All Rights Reserved.</p>
+</footer>
 
 </body>
 </html>
