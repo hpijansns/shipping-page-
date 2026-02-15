@@ -1,8 +1,4 @@
-/**
- * Aarush Ayurveda - Admin Dashboard Logic
- * GitHub Pages Compatible
- */
-
+// Firebase Config
 const firebaseConfig = {
     apiKey: "AIzaSyBXVrbfucAyj9wud-sY2BaO2mLO8JaeeQE",
     authDomain: "ship-53cd8.firebaseapp.com",
@@ -13,198 +9,201 @@ const firebaseConfig = {
     appId: "1:682363394250:web:705c36de45058f4a26bc33"
 };
 
+// Init Firebase
 firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+const database = firebase.database();
 
 let allOrders = [];
 
-// Tab Switcher
-function switchTab(tab) {
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
+// Panel Switcher
+function switchPanel(panelId) {
+    document.querySelectorAll('main > div').forEach(div => div.classList.add('hidden'));
+    document.getElementById('panel-' + panelId).classList.remove('hidden');
     
-    document.getElementById('tab-' + tab).classList.add('active');
-    document.getElementById('section-' + tab).classList.remove('hidden');
+    document.querySelectorAll('aside nav button').forEach(btn => btn.classList.remove('active-tab'));
+    document.getElementById('tab-' + panelId).classList.add('active-tab');
 }
 
-// --- Order Management ---
-
-db.ref('orders').on('value', (snapshot) => {
-    const data = snapshot.val();
+// Stats & Real-time Update
+database.ref('orders').on('value', snapshot => {
+    const orders = snapshot.val();
+    let revenue = 0;
+    let totalOrders = 0;
+    let newOrders = 0;
     allOrders = [];
-    const rows = document.getElementById('order-rows');
-    rows.innerHTML = '';
 
-    let stats = { total: 0, new: 0, proc: 0, ship: 0 };
+    const orderBody = document.getElementById('order-table-body');
+    orderBody.innerHTML = '';
 
-    if (data) {
-        Object.keys(data).reverse().forEach(id => {
-            const order = { id, ...data[id] };
-            allOrders.push(order);
+    if (orders) {
+        Object.keys(orders).reverse().forEach(key => {
+            const o = orders[key];
+            o.fbKey = key;
+            allOrders.push(o);
             
-            stats.total++;
-            if (order.status === 'New') stats.new++;
-            if (order.status === 'Processing') stats.proc++;
-            if (order.status === 'Shipped') stats.ship++;
+            revenue += o.total;
+            totalOrders++;
+            if (o.status === "New") newOrders++;
 
-            rows.innerHTML += `
-                <tr class="border-b hover:bg-stone-50 transition">
-                    <td class="p-4 text-xs font-medium text-gray-500">${order.time}</td>
-                    <td class="p-4">
-                        <div class="font-bold text-primary">${order.name}</div>
-                        <div class="text-xs text-stone-500">${order.phone} | ${order.email}</div>
-                        <div class="text-[10px] bg-gray-100 p-1 mt-1 rounded leading-tight">${order.address}</div>
+            const statusClass = `badge-${o.status.toLowerCase()}`;
+            orderBody.innerHTML += `
+                <tr class="border-b border-gray-50 hover:bg-gray-50 transition-all">
+                    <td class="p-8">
+                        <div class="font-bold text-luxuryGreen">${o.orderId}</div>
+                        <div class="text-[10px] text-gray-400 mt-1">${o.time}</div>
                     </td>
-                    <td class="p-4 text-xs">
-                        ${order.items.map(i => `<div class="mb-1">${i.name} <span class="text-gold font-bold">× ${i.quantity}</span></div>`).join('')}
+                    <td class="p-8">
+                        <div class="font-bold">${o.name}</div>
+                        <div class="text-xs text-gray-400">${o.phone}</div>
                     </td>
-                    <td class="p-4 font-bold text-primary">₹${order.total}</td>
-                    <td class="p-4">
-                        <select onchange="updateStatus('${id}', this.value)" class="p-2 border rounded text-xs outline-none ${getStatusColor(order.status)}">
-                            <option value="New" ${order.status === 'New' ? 'selected' : ''}>New</option>
-                            <option value="Processing" ${order.status === 'Processing' ? 'selected' : ''}>Processing</option>
-                            <option value="Shipped" ${order.status === 'Shipped' ? 'selected' : ''}>Shipped</option>
-                            <option value="Delivered" ${order.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
-                            <option value="Cancelled" ${order.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+                    <td class="p-8">
+                        <div class="text-xs">${o.items.map(i => `${i.name} (x${i.qty})`).join(', ')}</div>
+                    </td>
+                    <td class="p-8 font-bold text-luxuryGreen">₹${o.total.toLocaleString()}</td>
+                    <td class="p-8">
+                        <select onchange="updateOrderStatus('${o.fbKey}', this.value)" class="bg-gray-100 border-none rounded-full px-4 py-2 text-[10px] font-bold outline-none cursor-pointer">
+                            <option value="New" ${o.status === 'New' ? 'selected' : ''}>NEW</option>
+                            <option value="Processing" ${o.status === 'Processing' ? 'selected' : ''}>PROCESSING</option>
+                            <option value="Shipped" ${o.status === 'Shipped' ? 'selected' : ''}>SHIPPED</option>
+                            <option value="Delivered" ${o.status === 'Delivered' ? 'selected' : ''}>DELIVERED</option>
+                            <option value="Cancelled" ${o.status === 'Cancelled' ? 'selected' : ''}>CANCELLED</option>
                         </select>
                     </td>
-                    <td class="p-4">
-                        <div class="flex items-center justify-center space-x-3">
-                            <a href="https://wa.me/91${order.phone.replace(/\D/g,'')}" target="_blank" class="text-green-500 hover:scale-110 transition"><i class="fa-brands fa-whatsapp text-lg"></i></a>
-                            <button onclick="deleteOrder('${id}')" class="text-red-400 hover:text-red-600 transition"><i class="fa-solid fa-trash-can"></i></button>
+                    <td class="p-8 text-center">
+                        <div class="flex items-center justify-center gap-4">
+                            <a href="https://wa.me/91${o.phone}" target="_blank" class="text-green-500 hover:scale-110 transition"><i class="fa-brands fa-whatsapp text-lg"></i></a>
+                            <button onclick="deleteOrder('${o.fbKey}')" class="text-red-400 hover:text-red-600 transition"><i class="fa-solid fa-trash"></i></button>
                         </div>
                     </td>
                 </tr>
             `;
         });
     }
-    
-    // Update Stats
-    document.getElementById('stat-total').innerText = stats.total;
-    document.getElementById('stat-new').innerText = stats.new;
-    document.getElementById('stat-proc').innerText = stats.proc;
-    document.getElementById('stat-ship').innerText = stats.ship;
+
+    document.getElementById('stat-revenue').innerText = '₹' + revenue.toLocaleString();
+    document.getElementById('stat-orders').innerText = totalOrders;
+    document.getElementById('stat-new').innerText = newOrders;
 });
 
-function getStatusColor(status) {
-    if (status === 'New') return 'bg-blue-50 text-blue-600';
-    if (status === 'Processing') return 'bg-yellow-50 text-yellow-600';
-    if (status === 'Shipped') return 'bg-green-50 text-green-600';
-    if (status === 'Delivered') return 'bg-stone-800 text-white';
-    return 'bg-red-50 text-red-600';
-}
+// Product Management
+database.ref('products').on('value', snapshot => {
+    const products = snapshot.val();
+    const productBody = document.getElementById('product-table-body');
+    let lowStockCount = 0;
+    productBody.innerHTML = '';
 
-function updateStatus(id, status) {
-    db.ref('orders/' + id).update({ status });
-}
+    if (products) {
+        Object.keys(products).forEach(key => {
+            const p = products[key];
+            if (p.stock <= 5) lowStockCount++;
 
-function deleteOrder(id) {
-    if (confirm('Permanently delete this order?')) {
-        db.ref('orders/' + id).remove();
-    }
-}
-
-function filterOrders() {
-    const val = document.getElementById('search-order').value.toLowerCase();
-    const rows = document.querySelectorAll('#order-rows tr');
-    rows.forEach(row => {
-        row.style.display = row.innerText.toLowerCase().includes(val) ? '' : 'none';
-    });
-}
-
-function exportCSV() {
-    let csv = "Date,Name,Phone,Email,Total,Status,Address\n";
-    allOrders.forEach(o => {
-        csv += `${o.time},${o.name},${o.phone},${o.email},${o.total},${o.status},"${o.address}"\n`;
-    });
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'aarush_ayurveda_orders.csv';
-    a.click();
-}
-
-// --- Product Management ---
-
-const productForm = document.getElementById('product-form');
-
-db.ref('products').on('value', snapshot => {
-    const data = snapshot.val();
-    const rows = document.getElementById('product-rows');
-    rows.innerHTML = '';
-
-    if (data) {
-        Object.keys(data).forEach(id => {
-            const p = data[id];
-            rows.innerHTML += `
-                <tr class="border-b hover:bg-stone-50 transition">
-                    <td class="p-4 flex items-center space-x-3">
-                        <img src="${p.image}" class="w-10 h-10 object-cover rounded">
-                        <div>
-                            <div class="font-bold text-primary text-sm">${p.name}</div>
-                            <div class="text-[10px] text-gray-400 truncate max-w-[150px]">${p.description}</div>
-                        </div>
+            productBody.innerHTML += `
+                <tr class="border-b border-gray-50 hover:bg-gray-50 transition-all">
+                    <td class="p-8">
+                        <img src="${p.image}" class="w-16 h-16 rounded-2xl object-cover shadow-sm">
                     </td>
-                    <td class="p-4 font-bold text-primary text-sm">₹${p.price}</td>
-                    <td class="p-4 text-center">
-                        <span class="px-3 py-1 rounded-full text-xs font-bold ${p.stock > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
-                            ${p.stock}
-                        </span>
+                    <td class="p-8">
+                        <div class="font-bold text-luxuryGreen">${p.name}</div>
+                        <div class="text-[10px] text-gray-400 line-clamp-1 max-w-[200px]">${p.description}</div>
                     </td>
-                    <td class="p-4">
-                        <div class="flex justify-center space-x-3 text-sm">
-                            <button onclick="editProduct('${id}')" class="text-blue-500 hover:scale-110 transition"><i class="fa-solid fa-pen-to-square"></i></button>
-                            <button onclick="deleteProduct('${id}')" class="text-red-500 hover:scale-110 transition"><i class="fa-solid fa-trash-can"></i></button>
+                    <td class="p-8 font-bold text-luxuryGreen">₹${p.price}</td>
+                    <td class="p-8 text-center">
+                        <span class="font-bold ${p.stock <= 5 ? 'text-red-600' : 'text-luxuryGreen'}">${p.stock}</span>
+                    </td>
+                    <td class="p-8">
+                        <div class="flex items-center justify-center gap-6">
+                            <button onclick="editProduct('${key}')" class="text-gold hover:scale-110 transition"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="deleteProduct('${key}')" class="text-red-400 hover:scale-110 transition"><i class="fa-solid fa-trash"></i></button>
                         </div>
                     </td>
                 </tr>
             `;
         });
     }
+    document.getElementById('stat-low-stock').innerText = lowStockCount;
 });
 
-productForm.onsubmit = (e) => {
+// Modal Logic
+function openProductModal() {
+    document.getElementById('product-modal').classList.remove('hidden');
+}
+function closeProductModal() {
+    document.getElementById('product-modal').classList.add('hidden');
+    document.getElementById('product-form').reset();
+    document.getElementById('edit-id').value = '';
+    document.getElementById('modal-title').innerText = "Product Details";
+}
+
+document.getElementById('product-form').addEventListener('submit', (e) => {
     e.preventDefault();
     const id = document.getElementById('edit-id').value;
-    const prodData = {
+    const prod = {
         name: document.getElementById('prod-name').value,
         price: parseInt(document.getElementById('prod-price').value),
-        image: document.getElementById('prod-img').value,
         stock: parseInt(document.getElementById('prod-stock').value),
+        image: document.getElementById('prod-img').value,
         description: document.getElementById('prod-desc').value,
-        createdAt: new Date().getTime()
+        createdAt: new Date().toISOString()
     };
 
     if (id) {
-        db.ref('products/' + id).update(prodData);
+        database.ref('products/' + id).update(prod);
     } else {
-        db.ref('products').push(prodData);
+        database.ref('products').push(prod);
     }
-    resetProdForm();
-};
+    closeProductModal();
+});
 
 function editProduct(id) {
-    db.ref('products/' + id).once('value', snapshot => {
+    database.ref('products/' + id).once('value', snapshot => {
         const p = snapshot.val();
         document.getElementById('edit-id').value = id;
         document.getElementById('prod-name').value = p.name;
         document.getElementById('prod-price').value = p.price;
-        document.getElementById('prod-img').value = p.image;
         document.getElementById('prod-stock').value = p.stock;
+        document.getElementById('prod-img').value = p.image;
         document.getElementById('prod-desc').value = p.description;
-        document.getElementById('form-title').innerText = "Edit Product";
-        document.getElementById('prod-submit').innerText = "Update Product";
+        document.getElementById('modal-title').innerText = "Edit Product Entry";
+        openProductModal();
     });
 }
 
 function deleteProduct(id) {
-    if (confirm('Delete product?')) db.ref('products/' + id).remove();
+    if (confirm('Are you sure you want to remove this rare botanical formulation from inventory?')) {
+        database.ref('products/' + id).remove();
+    }
 }
 
-function resetProdForm() {
-    productForm.reset();
-    document.getElementById('edit-id').value = '';
-    document.getElementById('form-title').innerText = "Add New Product";
-    document.getElementById('prod-submit').innerText = "Save Product";
+function updateOrderStatus(id, status) {
+    database.ref('orders/' + id).update({ status });
+}
+
+function deleteOrder(id) {
+    if (confirm('Archive this order permanently?')) {
+        database.ref('orders/' + id).remove();
+    }
+}
+
+function searchOrders() {
+    const query = document.getElementById('orderSearch').value.toLowerCase();
+    const rows = document.querySelectorAll('#order-table-body tr');
+    rows.forEach(row => {
+        row.style.display = row.innerText.toLowerCase().includes(query) ? '' : 'none';
+    });
+}
+
+function exportCSV() {
+    let csv = "Order ID,Time,Customer,Phone,Total,Status,Address\n";
+    allOrders.forEach(o => {
+        csv += `${o.orderId},${o.time},${o.name},${o.phone},${o.total},${o.status},"${o.address.replace(/"/g, '""')}"\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.setAttribute('hidden', '');
+    a.setAttribute('href', url);
+    a.setAttribute('download', 'aarush_ayurveda_elite_orders.csv');
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
 }
