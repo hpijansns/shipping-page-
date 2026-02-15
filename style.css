@@ -1,6 +1,7 @@
-:root {
-    --primary: #1b4332;
-    --gold: #d4af37;
+/* Custom Transitions & Luxury Polish */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 body {
@@ -8,84 +9,65 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
-/* Glassmorphism Navigation */
-.glass-nav {
-    background: rgba(255, 255, 255, 0.01);
-    backdrop-blur: 10px;
+#product-list > div {
+    animation: fadeIn 0.6s ease forwards;
 }
 
-.nav-scrolled {
-    background: rgba(255, 255, 255, 0.95);
-    padding: 1rem 0;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+.sticky-nav {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
-.nav-scrolled .nav-text {
-    color: var(--primary) !important;
+/* Product Card Luxury Feel */
+.p-card {
+    transition: all 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
 }
 
-/* Product Cards */
-.product-card {
-    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+.p-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 30px 60px rgba(27, 67, 50, 0.1);
 }
 
-.product-card:hover {
-    transform: translateY(-15px);
+/* Cart Drawer Animation */
+#cart-drawer.active {
+    visibility: visible;
 }
 
-.product-card .img-overlay {
-    background: linear-gradient(to top, rgba(27, 67, 50, 0.6), transparent);
-    opacity: 0;
-    transition: 0.5s;
+#cart-drawer.active .translate-x-full {
+    transform: translateX(0);
 }
 
-.product-card:hover .img-overlay {
-    opacity: 1;
+/* Tab Switching */
+.tab-btn.active {
+    border-bottom: 2px solid #d4af37;
+    color: #d4af37;
 }
 
-/* Custom Scrollbar */
+.tab-content.hidden {
+    display: none;
+}
+
+/* Status Colors */
+.badge-New { background: #fef3c7; color: #92400e; }
+.badge-Processing { background: #dbeafe; color: #1e40af; }
+.badge-Shipped { background: #dcfce7; color: #166534; }
+.badge-Delivered { background: #f3e8ff; color: #6b21a8; }
+.badge-Cancelled { background: #fee2e2; color: #991b1b; }
+
+/* Scrollbar Styling */
 ::-webkit-scrollbar {
     width: 6px;
 }
+
 ::-webkit-scrollbar-track {
     background: #f1f1f1;
 }
+
 ::-webkit-scrollbar-thumb {
-    background: var(--gold);
+    background: #1b4332;
     border-radius: 10px;
 }
 
-/* Modal Animations */
-#success-card.show {
-    transform: scale(1);
+::-webkit-scrollbar-thumb:hover {
+    background: #d4af37;
 }
-
-/* Radio Button Styling */
-input[type="radio"]:checked + .radio-circle::after {
-    content: '';
-    width: 10px;
-    height: 10px;
-    background: var(--gold);
-    border-radius: 50%;
-}
-
-input[type="radio"]:checked + .radio-circle {
-    border-color: var(--gold);
-}
-
-/* Stats Decoration */
-.stat-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 5px;
-    background: var(--gold);
-    opacity: 0.3;
-}
-
-.badge-new { background: #e0f2fe; color: #0369a1; }
-.badge-processing { background: #fef3c7; color: #92400e; }
-.badge-shipped { background: #dcfce7; color: #166534; }
-.badge-delivered { background: #f1f5f9; color: #475569; }
