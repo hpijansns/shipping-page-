@@ -9,201 +9,217 @@ const firebaseConfig = {
     appId: "1:682363394250:web:705c36de45058f4a26bc33"
 };
 
-// Init Firebase
 firebase.initializeApp(firebaseConfig);
-const database = firebase.database();
+const db = firebase.database();
 
 let allOrders = [];
 
-// Panel Switcher
-function switchPanel(panelId) {
-    document.querySelectorAll('main > div').forEach(div => div.classList.add('hidden'));
-    document.getElementById('panel-' + panelId).classList.remove('hidden');
-    
-    document.querySelectorAll('aside nav button').forEach(btn => btn.classList.remove('active-tab'));
-    document.getElementById('tab-' + panelId).classList.add('active-tab');
+// Navigation
+function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    document.getElementById('section-' + tab).classList.remove('hidden');
 }
 
-// Stats & Real-time Update
-database.ref('orders').on('value', snapshot => {
-    const orders = snapshot.val();
-    let revenue = 0;
-    let totalOrders = 0;
-    let newOrders = 0;
-    allOrders = [];
+// ---------------- ORDER MANAGEMENT ----------------
 
-    const orderBody = document.getElementById('order-table-body');
-    orderBody.innerHTML = '';
-
-    if (orders) {
-        Object.keys(orders).reverse().forEach(key => {
-            const o = orders[key];
-            o.fbKey = key;
-            allOrders.push(o);
-            
-            revenue += o.total;
-            totalOrders++;
-            if (o.status === "New") newOrders++;
-
-            const statusClass = `badge-${o.status.toLowerCase()}`;
-            orderBody.innerHTML += `
-                <tr class="border-b border-gray-50 hover:bg-gray-50 transition-all">
-                    <td class="p-8">
-                        <div class="font-bold text-luxuryGreen">${o.orderId}</div>
-                        <div class="text-[10px] text-gray-400 mt-1">${o.time}</div>
-                    </td>
-                    <td class="p-8">
-                        <div class="font-bold">${o.name}</div>
-                        <div class="text-xs text-gray-400">${o.phone}</div>
-                    </td>
-                    <td class="p-8">
-                        <div class="text-xs">${o.items.map(i => `${i.name} (x${i.qty})`).join(', ')}</div>
-                    </td>
-                    <td class="p-8 font-bold text-luxuryGreen">₹${o.total.toLocaleString()}</td>
-                    <td class="p-8">
-                        <select onchange="updateOrderStatus('${o.fbKey}', this.value)" class="bg-gray-100 border-none rounded-full px-4 py-2 text-[10px] font-bold outline-none cursor-pointer">
-                            <option value="New" ${o.status === 'New' ? 'selected' : ''}>NEW</option>
-                            <option value="Processing" ${o.status === 'Processing' ? 'selected' : ''}>PROCESSING</option>
-                            <option value="Shipped" ${o.status === 'Shipped' ? 'selected' : ''}>SHIPPED</option>
-                            <option value="Delivered" ${o.status === 'Delivered' ? 'selected' : ''}>DELIVERED</option>
-                            <option value="Cancelled" ${o.status === 'Cancelled' ? 'selected' : ''}>CANCELLED</option>
-                        </select>
-                    </td>
-                    <td class="p-8 text-center">
-                        <div class="flex items-center justify-center gap-4">
-                            <a href="https://wa.me/91${o.phone}" target="_blank" class="text-green-500 hover:scale-110 transition"><i class="fa-brands fa-whatsapp text-lg"></i></a>
-                            <button onclick="deleteOrder('${o.fbKey}')" class="text-red-400 hover:text-red-600 transition"><i class="fa-solid fa-trash"></i></button>
-                        </div>
-                    </td>
-                </tr>
-            `;
-        });
-    }
-
-    document.getElementById('stat-revenue').innerText = '₹' + revenue.toLocaleString();
-    document.getElementById('stat-orders').innerText = totalOrders;
-    document.getElementById('stat-new').innerText = newOrders;
-});
-
-// Product Management
-database.ref('products').on('value', snapshot => {
-    const products = snapshot.val();
-    const productBody = document.getElementById('product-table-body');
-    let lowStockCount = 0;
-    productBody.innerHTML = '';
-
-    if (products) {
-        Object.keys(products).forEach(key => {
-            const p = products[key];
-            if (p.stock <= 5) lowStockCount++;
-
-            productBody.innerHTML += `
-                <tr class="border-b border-gray-50 hover:bg-gray-50 transition-all">
-                    <td class="p-8">
-                        <img src="${p.image}" class="w-16 h-16 rounded-2xl object-cover shadow-sm">
-                    </td>
-                    <td class="p-8">
-                        <div class="font-bold text-luxuryGreen">${p.name}</div>
-                        <div class="text-[10px] text-gray-400 line-clamp-1 max-w-[200px]">${p.description}</div>
-                    </td>
-                    <td class="p-8 font-bold text-luxuryGreen">₹${p.price}</td>
-                    <td class="p-8 text-center">
-                        <span class="font-bold ${p.stock <= 5 ? 'text-red-600' : 'text-luxuryGreen'}">${p.stock}</span>
-                    </td>
-                    <td class="p-8">
-                        <div class="flex items-center justify-center gap-6">
-                            <button onclick="editProduct('${key}')" class="text-gold hover:scale-110 transition"><i class="fa-solid fa-pen"></i></button>
-                            <button onclick="deleteProduct('${key}')" class="text-red-400 hover:scale-110 transition"><i class="fa-solid fa-trash"></i></button>
-                        </div>
-                    </td>
-                </tr>
-            `;
-        });
-    }
-    document.getElementById('stat-low-stock').innerText = lowStockCount;
-});
-
-// Modal Logic
-function openProductModal() {
-    document.getElementById('product-modal').classList.remove('hidden');
-}
-function closeProductModal() {
-    document.getElementById('product-modal').classList.add('hidden');
-    document.getElementById('product-form').reset();
-    document.getElementById('edit-id').value = '';
-    document.getElementById('modal-title').innerText = "Product Details";
-}
-
-document.getElementById('product-form').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const id = document.getElementById('edit-id').value;
-    const prod = {
-        name: document.getElementById('prod-name').value,
-        price: parseInt(document.getElementById('prod-price').value),
-        stock: parseInt(document.getElementById('prod-stock').value),
-        image: document.getElementById('prod-img').value,
-        description: document.getElementById('prod-desc').value,
-        createdAt: new Date().toISOString()
-    };
-
-    if (id) {
-        database.ref('products/' + id).update(prod);
-    } else {
-        database.ref('products').push(prod);
-    }
-    closeProductModal();
-});
-
-function editProduct(id) {
-    database.ref('products/' + id).once('value', snapshot => {
-        const p = snapshot.val();
-        document.getElementById('edit-id').value = id;
-        document.getElementById('prod-name').value = p.name;
-        document.getElementById('prod-price').value = p.price;
-        document.getElementById('prod-stock').value = p.stock;
-        document.getElementById('prod-img').value = p.image;
-        document.getElementById('prod-desc').value = p.description;
-        document.getElementById('modal-title').innerText = "Edit Product Entry";
-        openProductModal();
+function fetchOrders() {
+    db.ref('orders').on('value', (snapshot) => {
+        const data = snapshot.val();
+        allOrders = [];
+        const rows = document.getElementById('order-rows');
+        rows.innerHTML = '';
+        
+        if (data) {
+            Object.keys(data).reverse().forEach(id => {
+                const order = { id, ...data[id] };
+                allOrders.push(order);
+            });
+            calculateStats(allOrders);
+            renderOrders(allOrders);
+        }
     });
 }
 
-function deleteProduct(id) {
-    if (confirm('Are you sure you want to remove this rare botanical formulation from inventory?')) {
-        database.ref('products/' + id).remove();
-    }
+function calculateStats(orders) {
+    let revenue = 0;
+    let counts = { total: orders.length, New: 0, Processing: 0, Shipped: 0, Delivered: 0, Cancelled: 0 };
+
+    orders.forEach(o => {
+        revenue += Number(o.total || 0);
+        if (counts.hasOwnProperty(o.status)) counts[o.status]++;
+    });
+
+    document.getElementById('s-revenue').innerText = '₹' + revenue.toLocaleString();
+    document.getElementById('s-orders').innerText = counts.total;
+    document.getElementById('s-new').innerText = counts.New;
+    document.getElementById('s-proc').innerText = counts.Processing;
+    document.getElementById('s-ship').innerText = counts.Shipped;
+    document.getElementById('s-delv').innerText = counts.Delivered;
+    document.getElementById('s-cancel').innerText = counts.Cancelled;
 }
 
-function updateOrderStatus(id, status) {
-    database.ref('orders/' + id).update({ status });
+function renderOrders(orders) {
+    const rows = document.getElementById('order-rows');
+    const query = document.getElementById('orderSearch').value.toLowerCase();
+    rows.innerHTML = '';
+
+    orders.filter(o => o.name.toLowerCase().includes(query) || o.phone.includes(query)).forEach(o => {
+        rows.innerHTML += `
+            <tr class="hover:bg-stone-50 transition">
+                <td class="p-6">
+                    <div class="text-xs font-bold text-primary tracking-widest">${o.orderId || 'N/A'}</div>
+                    <div class="text-[10px] text-stone-400 mt-1">${o.time}</div>
+                </td>
+                <td class="p-6">
+                    <div class="font-bold">${o.name}</div>
+                    <div class="text-[10px] text-stone-400 uppercase tracking-widest">${o.phone}</div>
+                </td>
+                <td class="p-6 text-[10px] italic">
+                    ${o.items.map(i => `${i.name} (x${i.quantity})`).join(', ')}
+                </td>
+                <td class="p-6 font-bold text-primary">₹${o.total}</td>
+                <td class="p-6">
+                    <span class="px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest badge-${o.status}">${o.status}</span>
+                </td>
+                <td class="p-6">
+                    <div class="flex flex-wrap justify-center gap-2">
+                        <button onclick="updateStatus('${o.id}', 'Processing')" class="bg-blue-50 text-blue-600 px-3 py-1 rounded-lg text-[9px] font-bold uppercase hover:bg-blue-600 hover:text-white transition">Process</button>
+                        <button onclick="updateStatus('${o.id}', 'Shipped')" class="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-lg text-[9px] font-bold uppercase hover:bg-emerald-600 hover:text-white transition">Ship</button>
+                        <button onclick="updateStatus('${o.id}', 'Delivered')" class="bg-purple-50 text-purple-600 px-3 py-1 rounded-lg text-[9px] font-bold uppercase hover:bg-purple-600 hover:text-white transition">Delv</button>
+                        <button onclick="updateStatus('${o.id}', 'Cancelled')" class="bg-rose-50 text-rose-600 px-3 py-1 rounded-lg text-[9px] font-bold uppercase hover:bg-rose-600 hover:text-white transition">X</button>
+                    </div>
+                </td>
+                <td class="p-6 text-center">
+                    <div class="flex items-center justify-center space-x-4">
+                        <a href="https://wa.me/91${o.phone.replace(/\D/g,'')}" target="_blank" class="text-emerald-500 hover:scale-110 transition"><i class="fa-brands fa-whatsapp text-lg"></i></a>
+                        <button onclick="deleteOrder('${o.id}')" class="text-rose-300 hover:text-rose-500 transition"><i class="fa-solid fa-trash-can"></i></button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
 }
+
+async function updateStatus(id, newStatus) {
+    db.ref('orders/' + id).once('value').then(async (snap) => {
+        const o = snap.val();
+        await db.ref('orders/' + id).update({ status: newStatus });
+        
+        // Auto WhatsApp
+        const shortId = (o.orderId || 'N/A').slice(-6);
+        let emoji = "🔄";
+        if (newStatus === "Shipped") emoji = "🚚";
+        else if (newStatus === "Delivered") emoji = "✅";
+        else if (newStatus === "Cancelled") emoji = "❌";
+
+        const msg = `Namaste ${o.name} ji 🙏\n\nAapka order ID: #${shortId}\nAb status: ${newStatus} ${emoji}\n\nDhanyavaad 🙏\nAarush Ayurveda`;
+        const phone = o.phone.replace(/\D/g, '');
+        window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+    });
+}
+
+function filterOrders() { renderOrders(allOrders); }
 
 function deleteOrder(id) {
-    if (confirm('Archive this order permanently?')) {
-        database.ref('orders/' + id).remove();
-    }
-}
-
-function searchOrders() {
-    const query = document.getElementById('orderSearch').value.toLowerCase();
-    const rows = document.querySelectorAll('#order-table-body tr');
-    rows.forEach(row => {
-        row.style.display = row.innerText.toLowerCase().includes(query) ? '' : 'none';
-    });
+    if (confirm("Permanently archive this order?")) db.ref('orders/' + id).remove();
 }
 
 function exportCSV() {
-    let csv = "Order ID,Time,Customer,Phone,Total,Status,Address\n";
+    let csv = "Order ID,Customer,Phone,Total,Status,Time\n";
     allOrders.forEach(o => {
-        csv += `${o.orderId},${o.time},${o.name},${o.phone},${o.total},${o.status},"${o.address.replace(/"/g, '""')}"\n`;
+        csv += `${o.orderId},${o.name},${o.phone},${o.total},${o.status},${o.time}\n`;
     });
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.setAttribute('hidden', '');
-    a.setAttribute('href', url);
-    a.setAttribute('download', 'aarush_ayurveda_elite_orders.csv');
-    document.body.appendChild(a);
+    a.href = url;
+    a.download = 'AarushOrders.csv';
     a.click();
-    document.body.removeChild(a);
 }
+
+// ---------------- PRODUCT MANAGEMENT ----------------
+
+const prodForm = document.getElementById('product-form');
+
+function fetchProducts() {
+    db.ref('products').on('value', snap => {
+        const data = snap.val();
+        const list = document.getElementById('product-rows');
+        list.innerHTML = '';
+        if (data) {
+            Object.keys(data).forEach(id => {
+                const p = data[id];
+                list.innerHTML += `
+                    <tr class="hover:bg-stone-50 transition">
+                        <td class="p-6 flex items-center space-x-4">
+                            <img src="${p.image}" class="w-10 h-10 object-cover rounded-lg shadow-sm">
+                            <div>
+                                <div class="font-bold text-sm text-primary">${p.name}</div>
+                                <div class="text-[9px] text-stone-400 uppercase tracking-widest truncate max-w-[150px]">${p.description}</div>
+                            </div>
+                        </td>
+                        <td class="p-6 font-bold text-gold text-sm font-['Playfair_Display']">₹${p.price}</td>
+                        <td class="p-6 text-center">
+                            <span class="px-3 py-1 rounded-full text-[10px] font-bold ${p.stock < 5 ? 'bg-rose-100 text-rose-600' : 'bg-emerald-100 text-emerald-600'}">${p.stock}</span>
+                        </td>
+                        <td class="p-6">
+                            <div class="flex justify-center space-x-4">
+                                <button onclick="editProduct('${id}')" class="text-blue-400 hover:text-blue-600"><i class="fa-solid fa-pen-to-square"></i></button>
+                                <button onclick="deleteProduct('${id}')" class="text-rose-400 hover:text-rose-600"><i class="fa-solid fa-trash-can"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+    });
+}
+
+prodForm.onsubmit = (e) => {
+    e.preventDefault();
+    const id = document.getElementById('edit-id').value;
+    const prodData = {
+        name: document.getElementById('prod-name').value,
+        price: Number(document.getElementById('prod-price').value),
+        image: document.getElementById('prod-img').value,
+        stock: Number(document.getElementById('prod-stock').value),
+        description: document.getElementById('prod-desc').value,
+        createdAt: new Date().getTime()
+    };
+    if (id) db.ref('products/' + id).update(prodData);
+    else db.ref('products').push(prodData);
+    resetForm();
+};
+
+function editProduct(id) {
+    db.ref('products/' + id).once('value', snap => {
+        const p = snap.val();
+        document.getElementById('edit-id').value = id;
+        document.getElementById('prod-name').value = p.name;
+        document.getElementById('prod-price').value = p.price;
+        document.getElementById('prod-img').value = p.image;
+        document.getElementById('prod-stock').value = p.stock;
+        document.getElementById('prod-desc').value = p.description;
+        document.getElementById('form-title').innerText = "Edit Inventory Item";
+        document.getElementById('prod-submit').innerText = "Update Product";
+    });
+}
+
+function deleteProduct(id) {
+    if (confirm("Remove item from inventory vault?")) db.ref('products/' + id).remove();
+}
+
+function resetForm() {
+    prodForm.reset();
+    document.getElementById('edit-id').value = '';
+    document.getElementById('form-title').innerText = "Add New Product";
+    document.getElementById('prod-submit').innerText = "Save Product";
+}
+
+// Global Load
+window.onload = () => {
+    fetchOrders();
+    fetchProducts();
+};
