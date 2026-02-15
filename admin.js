@@ -1,3 +1,6 @@
+// ==========================
+// FIREBASE CONFIG
+// ==========================
 const firebaseConfig = {
     apiKey: "AIzaSyBXVrbfucAyj9wud-sY2BaO2mLO8JaeeQE",
     authDomain: "ship-53cd8.firebaseapp.com",
@@ -13,9 +16,9 @@ const db = firebase.database();
 
 const ADMIN_CREDS = { mobile: "7627055204", pass: "Aarush@2025" };
 
-/**
- * 1. LOGIN SYSTEM LOGIC
- */
+// ==========================
+// LOGIN SYSTEM
+// ==========================
 document.getElementById('login-form').onsubmit = function(e) {
     e.preventDefault();
     const mobile = document.getElementById('login-mobile').value;
@@ -48,46 +51,50 @@ function logoutAdmin() {
     checkAuth();
 }
 
-/**
- * 2. INITIALIZE DASHBOARD FEATURES
- */
+// ==========================
+// DASHBOARD INIT
+// ==========================
 let allOrders = [];
+let productCache = {};
 
 function initializeDashboard() {
     fetchOrders();
     fetchProducts();
 }
 
-// Navigation Tabs
-function switchTab(tab) {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
-    document.getElementById('tab-' + tab).classList.add('active');
-    document.getElementById('section-' + tab).classList.remove('hidden');
-}
-
-// Order Management
+// ==========================
+// ORDER MANAGEMENT
+// ==========================
 function fetchOrders() {
+    db.ref('orders').off();
     db.ref('orders').on('value', (snapshot) => {
         const data = snapshot.val();
         allOrders = [];
-        if (data) {
-            Object.keys(data).reverse().forEach(id => {
-                allOrders.push({ id, ...data[id] });
-            });
-            calculateStats(allOrders);
-            renderOrders(allOrders);
+
+        if (!data) {
+            calculateStats([]);
+            renderOrders([]);
+            return;
         }
+
+        Object.keys(data).reverse().forEach(id => {
+            allOrders.push({ id, ...data[id] });
+        });
+
+        calculateStats(allOrders);
+        renderOrders(allOrders);
     });
 }
 
 function calculateStats(orders) {
     let revenue = 0;
     let counts = { total: orders.length, New: 0, Processing: 0, Shipped: 0, Delivered: 0, Cancelled: 0 };
+
     orders.forEach(o => {
         revenue += Number(o.total || 0);
         if (counts.hasOwnProperty(o.status)) counts[o.status]++;
     });
+
     document.getElementById('s-revenue').innerText = '₹' + revenue.toLocaleString();
     document.getElementById('s-orders').innerText = counts.total;
     document.getElementById('s-new').innerText = counts.New;
@@ -101,129 +108,177 @@ function renderOrders(orders) {
     const rows = document.getElementById('order-rows');
     const query = document.getElementById('orderSearch').value.toLowerCase();
     rows.innerHTML = '';
-    orders.filter(o => o.name.toLowerCase().includes(query) || o.phone.includes(query)).forEach(o => {
-        const shortId = (o.orderId || o.id).slice(-6);
-        rows.innerHTML += `
-            <tr class="hover:bg-stone-50 transition">
-                <td class="p-6">
-                    <div class="text-xs font-bold text-primary tracking-widest">#${shortId}</div>
-                    <div class="text-[10px] text-stone-400 mt-1">${o.time}</div>
-                </td>
-                <td class="p-6">
-                    <div class="font-bold">${o.name}</div>
-                    <div class="text-[10px] text-stone-400 uppercase tracking-widest">${o.phone}</div>
-                </td>
-                <td class="p-6 text-[10px] italic">
-                    ${Array.isArray(o.items) ? o.items.map(i => `${i.name} (x${i.quantity})`).join(', ') : o.items}
-                </td>
-                <td class="p-6 font-bold text-primary">₹${o.total}</td>
-                <td class="p-6">
-                    <span class="px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest badge-${o.status}">${o.status}</span>
-                </td>
-                <td class="p-6">
-                    <div class="flex flex-wrap justify-center gap-2">
-                        <button onclick="updateStatus('${o.id}', 'Processing')" class="bg-blue-50 text-blue-600 px-3 py-1 rounded-lg text-[9px] font-bold uppercase hover:bg-blue-600 hover:text-white transition">Process</button>
-                        <button onclick="updateStatus('${o.id}', 'Shipped')" class="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-lg text-[9px] font-bold uppercase hover:bg-emerald-600 hover:text-white transition">Ship</button>
-                        <button onclick="updateStatus('${o.id}', 'Delivered')" class="bg-purple-50 text-purple-600 px-3 py-1 rounded-lg text-[9px] font-bold uppercase hover:bg-purple-600 hover:text-white transition">Delv</button>
-                        <button onclick="updateStatus('${o.id}', 'Cancelled')" class="bg-rose-50 text-rose-600 px-3 py-1 rounded-lg text-[9px] font-bold uppercase hover:bg-rose-600 hover:text-white transition">X</button>
-                    </div>
-                </td>
-                <td class="p-6 text-center">
-                    <div class="flex items-center justify-center space-x-4">
-                        <a href="https://wa.me/91${o.phone.replace(/\D/g,'')}" target="_blank" class="text-emerald-500 hover:scale-110 transition"><i class="fa-brands fa-whatsapp text-lg"></i></a>
-                        <button onclick="deleteOrder('${o.id}')" class="text-rose-300 hover:text-rose-500 transition"><i class="fa-solid fa-trash-can"></i></button>
-                    </div>
-                </td>
-            </tr>`;
-    });
+
+    orders
+        .filter(o =>
+            (o.name || '').toLowerCase().includes(query) ||
+            (o.phone || '').includes(query)
+        )
+        .forEach(o => {
+            const shortId = (o.orderId || o.id).slice(-6);
+
+            rows.innerHTML += `
+                <tr class="hover:bg-stone-50 transition">
+                    <td class="p-6">
+                        <div class="text-xs font-bold text-primary tracking-widest">#${shortId}</div>
+                        <div class="text-[10px] text-stone-400 mt-1">${o.time || ''}</div>
+                    </td>
+                    <td class="p-6">
+                        <div class="font-bold">${o.name}</div>
+                        <div class="text-[10px] text-stone-400 uppercase tracking-widest">${o.phone}</div>
+                    </td>
+                    <td class="p-6 text-[10px] italic">
+                        ${Array.isArray(o.items) ? o.items.map(i => `${i.name} (x${i.quantity})`).join(', ') : o.items}
+                    </td>
+                    <td class="p-6 font-bold text-primary">₹${Number(o.total || 0)}</td>
+                    <td class="p-6">
+                        <span class="px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest badge-${o.status}">
+                            ${o.status}
+                        </span>
+                    </td>
+                    <td class="p-6">
+                        <div class="flex flex-wrap justify-center gap-2">
+                            <button onclick="updateStatus('${o.id}', 'Processing')" class="bg-blue-50 text-blue-600 px-3 py-1 rounded-lg text-[9px] font-bold uppercase">Process</button>
+                            <button onclick="updateStatus('${o.id}', 'Shipped')" class="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-lg text-[9px] font-bold uppercase">Ship</button>
+                            <button onclick="updateStatus('${o.id}', 'Delivered')" class="bg-purple-50 text-purple-600 px-3 py-1 rounded-lg text-[9px] font-bold uppercase">Delv</button>
+                            <button onclick="updateStatus('${o.id}', 'Cancelled')" class="bg-rose-50 text-rose-600 px-3 py-1 rounded-lg text-[9px] font-bold uppercase">X</button>
+                        </div>
+                    </td>
+                    <td class="p-6 text-center">
+                        <div class="flex items-center justify-center space-x-4">
+                            <a href="https://wa.me/91${(o.phone || '').replace(/\D/g,'')}" target="_blank" class="text-emerald-500">
+                                <i class="fa-brands fa-whatsapp text-lg"></i>
+                            </a>
+                            <button onclick="deleteOrder('${o.id}')" class="text-rose-400">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>`;
+        });
 }
 
 function updateStatus(id, newStatus) {
     db.ref('orders/' + id).once('value').then(async (snap) => {
         const o = snap.val();
         if (!o) return;
+
         await db.ref('orders/' + id).update({ status: newStatus });
+
         const shortId = (o.orderId || id).slice(-6);
-        let emoji = newStatus === "Shipped" ? "🚚" : newStatus === "Delivered" ? "✅" : newStatus === "Cancelled" ? "❌" : "🔄";
-        const msg = `Namaste ${o.name} ji 🙏\nAapka order ID: #${shortId}\nAb status: ${newStatus} ${emoji}\nDhanyavaad 🙏\nAarush Ayurveda`;
-        const phone = o.phone.replace(/\D/g, '');
+        const msg = `Namaste ${o.name} ji 🙏\nAapka order ID: #${shortId}\nAb status: ${newStatus}\nDhanyavaad 🙏\nAarush Ayurveda`;
+
+        const phone = (o.phone || '').replace(/\D/g, '');
         window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(msg)}`, '_blank');
     });
 }
 
-function filterOrders() { renderOrders(allOrders); }
-function deleteOrder(id) { if (confirm("Delete this order?")) db.ref('orders/' + id).remove(); }
-function exportCSV() {
-    let csv = "ID,Customer,Phone,Total,Status,Time\n";
-    allOrders.forEach(o => { csv += `${o.orderId || o.id},${o.name},${o.phone},${o.total},${o.status},${o.time}\n`; });
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'AarushOrders.csv'; a.click();
+function deleteOrder(id) {
+    if (confirm("Delete this order?"))
+        db.ref('orders/' + id).remove();
 }
 
-// Product Management
+function filterOrders() { renderOrders(allOrders); }
+
+// ==========================
+// PRODUCT MANAGEMENT (STABLE)
+// ==========================
 function fetchProducts() {
+    db.ref('products').off();
+
     db.ref('products').on('value', snap => {
         const data = snap.val();
         const list = document.getElementById('product-rows');
         list.innerHTML = '';
-        if (data) {
-            Object.keys(data).forEach(id => {
-                const p = data[id];
-                list.innerHTML += `
-                    <tr class="hover:bg-stone-50 transition">
-                        <td class="p-6 flex items-center space-x-4">
-                            <img src="${p.image}" class="w-10 h-10 object-cover rounded-lg shadow-sm">
-                            <div><div class="font-bold text-sm text-primary">${p.name}</div></div>
-                        </td>
-                        <td class="p-6 font-bold text-gold text-sm">₹${p.price}</td>
-                        <td class="p-6 text-center">
-                            <span class="px-3 py-1 rounded-full text-[10px] font-bold ${p.stock < 5 ? 'bg-rose-100 text-rose-600' : 'bg-emerald-100 text-emerald-600'}">${p.stock}</span>
-                        </td>
-                        <td class="p-6">
-                            <div class="flex justify-center space-x-4">
-                                <button onclick="editProduct('${id}')" class="text-blue-400 hover:text-blue-600"><i class="fa-solid fa-pen-to-square"></i></button>
-                                <button onclick="deleteProduct('${id}')" class="text-rose-400 hover:text-rose-600"><i class="fa-solid fa-trash-can"></i></button>
-                            </div>
-                        </td>
-                    </tr>`;
-            });
+
+        if (!data) {
+            list.innerHTML = `
+                <tr>
+                    <td colspan="4" class="p-6 text-center text-gray-400">
+                        No products found
+                    </td>
+                </tr>`;
+            productCache = {};
+            return;
         }
+
+        productCache = data;
+
+        Object.keys(data).forEach(id => {
+            const p = data[id];
+
+            list.innerHTML += `
+                <tr class="hover:bg-stone-50 transition">
+                    <td class="p-6 flex items-center space-x-4">
+                        <img src="${p.image}" class="w-10 h-10 object-cover rounded-lg shadow-sm">
+                        <div class="font-bold text-sm text-primary">${p.name}</div>
+                    </td>
+                    <td class="p-6 font-bold text-gold text-sm">₹${Number(p.price)}</td>
+                    <td class="p-6 text-center">
+                        <span class="px-3 py-1 rounded-full text-[10px] font-bold 
+                        ${p.stock < 5 ? 'bg-rose-100 text-rose-600' : 'bg-emerald-100 text-emerald-600'}">
+                        ${p.stock}
+                        </span>
+                    </td>
+                    <td class="p-6 text-center">
+                        <button onclick="editProduct('${id}')" class="text-blue-400 mr-3"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deleteProduct('${id}')" class="text-rose-400"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>`;
+        });
     });
 }
 
 const prodForm = document.getElementById('product-form');
-prodForm.onsubmit = (e) => {
+
+prodForm.onsubmit = async (e) => {
     e.preventDefault();
+
     const id = document.getElementById('edit-id').value;
+
     const prodData = {
-        name: document.getElementById('prod-name').value,
+        name: document.getElementById('prod-name').value.trim(),
         price: Number(document.getElementById('prod-price').value),
-        image: document.getElementById('prod-img').value,
+        image: document.getElementById('prod-img').value.trim(),
         stock: Number(document.getElementById('prod-stock').value),
-        description: document.getElementById('prod-desc').value
+        description: document.getElementById('prod-desc').value.trim(),
+        updatedAt: Date.now()
     };
-    if (id) db.ref('products/' + id).update(prodData);
-    else db.ref('products').push(prodData);
+
+    if (id)
+        await db.ref('products/' + id).update(prodData);
+    else
+        await db.ref('products').push(prodData);
+
     resetForm();
 };
 
 function editProduct(id) {
-    db.ref('products/' + id).once('value', snap => {
-        const p = snap.val();
-        document.getElementById('edit-id').value = id;
-        document.getElementById('prod-name').value = p.name;
-        document.getElementById('prod-price').value = p.price;
-        document.getElementById('prod-img').value = p.image;
-        document.getElementById('prod-stock').value = p.stock;
-        document.getElementById('prod-desc').value = p.description;
-        document.getElementById('form-title').innerText = "Edit Product";
-        document.getElementById('prod-submit').innerText = "Update Product";
-    });
-}
-function deleteProduct(id) { if (confirm("Delete Product?")) db.ref('products/' + id).remove(); }
-function resetForm() { prodForm.reset(); document.getElementById('edit-id').value = ''; document.getElementById('form-title').innerText = "Add New Product"; document.getElementById('prod-submit').innerText = "Save Product"; }
+    const p = productCache[id];
+    if (!p) return;
 
-// Start Auth Check
+    document.getElementById('edit-id').value = id;
+    document.getElementById('prod-name').value = p.name;
+    document.getElementById('prod-price').value = p.price;
+    document.getElementById('prod-img').value = p.image;
+    document.getElementById('prod-stock').value = p.stock;
+    document.getElementById('prod-desc').value = p.description;
+
+    document.getElementById('form-title').innerText = "Edit Product";
+    document.getElementById('prod-submit').innerText = "Update Product";
+}
+
+function deleteProduct(id) {
+    if (confirm("Delete Product?"))
+        db.ref('products/' + id).remove();
+}
+
+function resetForm() {
+    prodForm.reset();
+    document.getElementById('edit-id').value = '';
+    document.getElementById('form-title').innerText = "Add New Product";
+    document.getElementById('prod-submit').innerText = "Save Product";
+}
+
+// START AUTH
 checkAuth();
