@@ -1,158 +1,165 @@
-// Firebase Config
-const firebaseConfig = {
-    apiKey: "AIzaSyBXVrbfucAyj9wud-sY2BaO2mLO8JaeeQE",
-    authDomain: "ship-53cd8.firebaseapp.com",
-    databaseURL: "https://ship-53cd8-default-rtdb.firebaseio.com",
-    projectId: "ship-53cd8",
-    storageBucket: "ship-53cd8.firebasestorage.app",
-    messagingSenderId: "682363394250",
-    appId: "1:682363394250:web:705c36de45058f4a26bc33"
-};
-
-// Initialize
-firebase.initializeApp(firebaseConfig);
-const database = firebase.database();
-
-let allOrders = [];
-
-/**
- * 1. Fetch Orders in Real-Time
- */
-function fetchOrders() {
-    database.ref('orders').on('value', (snapshot) => {
-        const data = snapshot.val();
-        allOrders = [];
-
-        if (data) {
-            Object.keys(data).forEach(id => {
-                allOrders.push({ id, ...data[id] });
-            });
-            // Newest first
-            allOrders.reverse();
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aarush Admin | Business Control Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { primary: '#1b4332', gold: '#d4af37' }
+                }
+            }
         }
+    </script>
+</head>
+<body class="bg-stone-50 text-slate-800 font-['Poppins']">
 
-        calculateStats(allOrders);
-        renderOrders(allOrders);
-    }, (error) => {
-        console.error("Database Error: ", error);
-    });
-}
+    <nav class="bg-primary text-white p-6 shadow-xl sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center px-4">
+            <h1 class="text-xl font-bold tracking-[0.2em] uppercase">Control <span class="text-gold">Panel</span></h1>
+            <div class="flex items-center space-x-6">
+                <span class="text-[10px] hidden md:inline-block bg-white/10 px-3 py-1 rounded-full border border-white/20 uppercase tracking-widest">
+                    <i class="fa-solid fa-circle text-green-500 animate-pulse mr-2"></i> Real-time Database
+                </span>
+                <a href="index.html" class="bg-gold text-primary px-5 py-2 rounded-full font-bold text-xs uppercase hover:bg-white transition">Visit Store</a>
+            </div>
+        </div>
+    </nav>
 
-/**
- * 2. Calculate Dashboard Stats
- */
-function calculateStats(orders) {
-    let revenue = 0;
-    let counts = {
-        total: orders.length,
-        new: 0,
-        processing: 0,
-        shipped: 0,
-        delivered: 0,
-        cancelled: 0
-    };
-
-    orders.forEach(order => {
-        // Convert total to number safely
-        const amount = parseFloat(order.total) || 0;
-        revenue += amount;
-
-        const status = (order.status || 'New').toLowerCase();
-        if (status === 'new') counts.new++;
-        else if (status === 'processing') counts.processing++;
-        else if (status === 'shipped') counts.shipped++;
-        else if (status === 'delivered') counts.delivered++;
-        else if (status === 'cancelled') counts.cancelled++;
-    });
-
-    // Update DOM
-    document.getElementById('totalRevenue').innerText = `₹${revenue.toLocaleString()}`;
-    document.getElementById('totalOrders').innerText = counts.total;
-    document.getElementById('newCount').innerText = counts.new;
-    document.getElementById('processingCount').innerText = counts.processing;
-    document.getElementById('shippedCount').innerText = counts.shipped;
-    document.getElementById('deliveredCount').innerText = counts.delivered;
-    document.getElementById('cancelledCount').innerText = counts.cancelled;
-}
-
-/**
- * 3. Render Table UI
- */
-function renderOrders(orders) {
-    const listBody = document.getElementById('orderList');
-    const searchVal = document.getElementById('searchInput').value.toLowerCase();
-    listBody.innerHTML = '';
-
-    const filtered = orders.filter(o => 
-        o.name.toLowerCase().includes(searchVal) || 
-        o.phone.includes(searchVal)
-    );
-
-    if (filtered.length === 0) {
-        listBody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-gray-400">No matching orders found.</td></tr>`;
-        return;
-    }
-
-    filtered.forEach(order => {
-        const row = document.createElement('tr');
-        row.className = "hover:bg-gray-50 transition";
+    <div class="container mx-auto p-4 md:p-10">
         
-        const status = order.status || 'New';
-        const badgeClass = `badge-${status.toLowerCase()}`;
+        <!-- Performance Overview Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-10">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 border-t-4 border-t-gold">
+                <p class="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-1">Revenue</p>
+                <h2 id="s-revenue" class="text-lg font-bold text-primary">₹0</h2>
+            </div>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-stone-100">
+                <p class="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-1">Total</p>
+                <h2 id="s-orders" class="text-lg font-bold text-gray-800">0</h2>
+            </div>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 border-l-4 border-l-yellow-400">
+                <p class="text-yellow-600 text-[10px] font-bold uppercase tracking-widest mb-1">New</p>
+                <h2 id="s-new" class="text-lg font-bold">0</h2>
+            </div>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 border-l-4 border-l-blue-400">
+                <p class="text-blue-600 text-[10px] font-bold uppercase tracking-widest mb-1">Process</p>
+                <h2 id="s-proc" class="text-lg font-bold">0</h2>
+            </div>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 border-l-4 border-l-emerald-400">
+                <p class="text-emerald-600 text-[10px] font-bold uppercase tracking-widest mb-1">Ship</p>
+                <h2 id="s-ship" class="text-lg font-bold">0</h2>
+            </div>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 border-l-4 border-l-purple-400">
+                <p class="text-purple-600 text-[10px] font-bold uppercase tracking-widest mb-1">Delv</p>
+                <h2 id="s-delv" class="text-lg font-bold">0</h2>
+            </div>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 border-l-4 border-l-rose-400">
+                <p class="text-rose-600 text-[10px] font-bold uppercase tracking-widest mb-1">Cancel</p>
+                <h2 id="s-cancel" class="text-lg font-bold">0</h2>
+            </div>
+        </div>
 
-        row.innerHTML = `
-            <td class="p-6">
-                <div class="text-xs font-bold text-gray-400">#${order.id.slice(-6)}</div>
-                <div class="text-[10px] text-gray-500 font-medium mt-1">${order.time || 'Date Unknown'}</div>
-            </td>
-            <td class="p-6">
-                <div class="text-sm font-bold text-gray-800">${order.name}</div>
-                <div class="text-xs text-blue-600 font-medium underline underline-offset-4">${order.phone}</div>
-                <div class="text-[10px] text-gray-400 mt-1 max-w-[200px] truncate">${order.address}</div>
-            </td>
-            <td class="p-6 font-bold text-primary">₹${parseFloat(order.total || 0).toLocaleString()}</td>
-            <td class="p-6">
-                <span class="status-badge ${badgeClass}">${status}</span>
-            </td>
-            <td class="p-6">
-                <div class="flex flex-wrap justify-center gap-2">
-                    <button onclick="updateStatus('${order.id}', 'Processing')" class="text-[10px] font-bold px-3 py-1 bg-blue-50 text-blue-600 border border-blue-200 rounded-md hover:bg-blue-600 hover:text-white transition">Processing</button>
-                    <button onclick="updateStatus('${order.id}', 'Shipped')" class="text-[10px] font-bold px-3 py-1 bg-green-50 text-green-600 border border-green-200 rounded-md hover:bg-green-600 hover:text-white transition">Shipped</button>
-                    <button onclick="updateStatus('${order.id}', 'Delivered')" class="text-[10px] font-bold px-3 py-1 bg-purple-50 text-purple-600 border border-purple-200 rounded-md hover:bg-purple-600 hover:text-white transition">Delivered</button>
-                    <button onclick="updateStatus('${order.id}', 'Cancelled')" class="text-[10px] font-bold px-3 py-1 bg-red-50 text-red-600 border border-red-200 rounded-md hover:bg-red-600 hover:text-white transition">Cancel</button>
+        <!-- Navigation Tabs -->
+        <div class="flex space-x-6 border-b mb-10 overflow-x-auto">
+            <button onclick="switchTab('orders')" id="tab-orders" class="tab-btn pb-4 font-bold active whitespace-nowrap uppercase tracking-widest text-xs">Orders Manager</button>
+            <button onclick="switchTab('products')" id="tab-products" class="tab-btn pb-4 font-bold whitespace-nowrap uppercase tracking-widest text-xs">Inventory Vault</button>
+        </div>
+
+        <!-- Orders Management -->
+        <div id="section-orders" class="tab-content">
+            <div class="bg-white rounded-[30px] shadow-sm border border-stone-100 overflow-hidden">
+                <div class="p-8 border-b flex flex-col md:flex-row justify-between items-center gap-6">
+                    <h3 class="text-xl font-bold text-primary tracking-tight">Orders Registry</h3>
+                    <div class="flex space-x-4 w-full md:w-auto">
+                        <input type="text" id="orderSearch" onkeyup="filterOrders()" placeholder="Search Name or Phone..." class="flex-1 p-3 border rounded-xl outline-none focus:ring-1 focus:ring-gold text-sm">
+                        <button onclick="exportCSV()" class="bg-stone-100 text-stone-600 px-6 py-3 rounded-xl font-bold uppercase text-[10px] tracking-widest hover:bg-stone-200 transition">Export</button>
+                    </div>
                 </div>
-            </td>
-            <td class="p-6 text-center">
-                <button onclick="deleteOrder('${order.id}')" class="text-gray-300 hover:text-red-500 transition px-2">
-                    <i class="fa-solid fa-trash-can"></i>
-                </button>
-            </td>
-        `;
-        listBody.appendChild(row);
-    });
-}
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left whitespace-nowrap">
+                        <thead class="bg-stone-50 text-[10px] uppercase font-bold text-stone-400 tracking-[0.2em]">
+                            <tr>
+                                <th class="p-6">Time & ID</th>
+                                <th class="p-6">Customer</th>
+                                <th class="p-6">Items</th>
+                                <th class="p-6">Total</th>
+                                <th class="p-6">Current Status</th>
+                                <th class="p-6 text-center">Status Update (One-Click)</th>
+                                <th class="p-6 text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="order-rows" class="divide-y divide-stone-50 text-sm">
+                            <!-- Dynamic Rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
 
-/**
- * 4. Update Status (One-Click)
- */
-function updateStatus(id, newStatus) {
-    database.ref('orders/' + id).update({
-        status: newStatus
-    }).then(() => {
-        console.log(`Order ${id} updated to ${newStatus}`);
-    }).catch(err => {
-        alert("Update failed: " + err.message);
-    });
-}
+        <!-- Inventory Management -->
+        <div id="section-products" class="tab-content hidden">
+            <div class="grid lg:grid-cols-3 gap-10">
+                <!-- Add Form -->
+                <div class="bg-white p-8 rounded-[30px] shadow-sm border border-stone-100 h-fit sticky top-28">
+                    <h3 id="form-title" class="text-xl font-bold text-primary mb-8 tracking-tight">Add New Product</h3>
+                    <form id="product-form" class="space-y-5">
+                        <input type="hidden" id="edit-id">
+                        <div>
+                            <label class="text-[10px] font-bold text-stone-400 uppercase tracking-widest block mb-2">Product Name</label>
+                            <input type="text" id="prod-name" required class="w-full p-3 border rounded-xl focus:ring-1 focus:ring-gold outline-none transition">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-stone-400 uppercase tracking-widest block mb-2">Price (₹)</label>
+                            <input type="number" id="prod-price" required class="w-full p-3 border rounded-xl focus:ring-1 focus:ring-gold outline-none transition">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-stone-400 uppercase tracking-widest block mb-2">Image URL</label>
+                            <input type="url" id="prod-img" required class="w-full p-3 border rounded-xl focus:ring-1 focus:ring-gold outline-none transition">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-stone-400 uppercase tracking-widest block mb-2">Stock Level</label>
+                            <input type="number" id="prod-stock" required class="w-full p-3 border rounded-xl focus:ring-1 focus:ring-gold outline-none transition">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-stone-400 uppercase tracking-widest block mb-2">Description</label>
+                            <textarea id="prod-desc" required rows="3" class="w-full p-3 border rounded-xl focus:ring-1 focus:ring-gold outline-none transition"></textarea>
+                        </div>
+                        <div class="pt-4 flex gap-4">
+                            <button type="submit" id="prod-submit" class="flex-1 bg-primary text-gold py-4 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-luxury transition">Save Product</button>
+                            <button type="button" onclick="resetForm()" class="px-6 py-4 bg-stone-100 rounded-xl font-bold uppercase text-[10px] tracking-widest hover:bg-stone-200">Reset</button>
+                        </div>
+                    </form>
+                </div>
+                <!-- Inventory List -->
+                <div class="lg:col-span-2 bg-white rounded-[30px] shadow-sm border border-stone-100 overflow-hidden">
+                    <table class="w-full text-left">
+                        <thead class="bg-stone-50 text-[10px] uppercase font-bold text-stone-400 tracking-widest">
+                            <tr>
+                                <th class="p-6">Product</th>
+                                <th class="p-6">Price</th>
+                                <th class="p-6 text-center">Stock</th>
+                                <th class="p-6 text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="product-rows" class="divide-y divide-stone-50">
+                            <!-- Dynamic Products -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 
-/**
- * 5. Delete Logic
- */
-function deleteOrder(id) {
-    if (confirm("Permanently delete this order data?")) {
-        database.ref('orders/' + id).remove();
-    }
-}
-
-// Start Fetching on Load
-window.onload = fetchOrders;
+    <!-- Firebase Compat SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script src="admin.js"></script>
+</body>
+</html>
