@@ -1,91 +1,57 @@
+:root {
+    --primary: #1b4332;
+    --gold: #d4af37;
+    --accent: #2d6a4f;
+}
+
 body {
-  margin:0;
-  font-family: Arial, sans-serif;
-  background:#f9f9f9;
-}
-
-header {
-  background:#1e4d2b;
-  color:white;
-  padding:15px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-
-header a {
-  color:white;
-  margin-left:15px;
-  text-decoration:none;
-}
-
-.hero {
-  padding:60px 20px;
-  text-align:center;
-  background:#e6f4ea;
-}
-
-.btn {
-  background:#2e7d32;
-  color:white;
-  padding:10px 20px;
-  text-decoration:none;
-  border-radius:5px;
-}
-
-.products {
-  display:flex;
-  justify-content:center;
-  padding:40px;
+    font-family: 'Poppins', sans-serif;
+    scroll-behavior: smooth;
 }
 
 .product-card {
-  background:white;
-  padding:20px;
-  border-radius:8px;
-  box-shadow:0 5px 15px rgba(0,0,0,0.1);
-  text-align:center;
+    transition: transform 0.3s ease;
+    border: 1px solid transparent;
 }
 
-.product-detail {
-  display:flex;
-  flex-wrap:wrap;
-  justify-content:center;
-  padding:40px;
-  gap:30px;
+.product-card:hover {
+    transform: translateY(-10px);
+    border-color: var(--gold);
 }
 
-.product-detail img {
-  max-width:300px;
+.btn-gold {
+    background: var(--gold);
+    color: var(--primary);
+    transition: all 0.3s;
 }
 
-form {
-  display:flex;
-  flex-direction:column;
-  max-width:400px;
-  margin:auto;
-  gap:15px;
-  padding:20px;
+.btn-gold:hover {
+    background: #c29b2f;
+    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
 }
 
-input, textarea {
-  padding:10px;
-  border:1px solid #ccc;
-  border-radius:5px;
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb {
+    background: var(--primary);
 }
 
-button {
-  background:#2e7d32;
-  color:white;
-  padding:10px;
-  border:none;
-  border-radius:5px;
-  cursor:pointer;
+/* Loader Animation */
+.loading-spinner {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid var(--gold);
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
 }
 
-footer {
-  text-align:center;
-  padding:20px;
-  background:#1e4d2b;
-  color:white;
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
