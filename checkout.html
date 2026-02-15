@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Checkout</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<h2>Place Your Order</h2>
+
+<form id="orderForm">
+
+  <input id="name" placeholder="Full Name" required>
+  <input id="phone" placeholder="Mobile Number" required>
+  <textarea id="address" placeholder="Full Address" required></textarea>
+
+  <button type="submit">Place Order</button>
+
+</form>
+
+<script>
+document.getElementById("orderForm")
+.addEventListener("submit", function(e){
+
+e.preventDefault();
+
+alert("Order Received! We will contact you shortly.");
+
+document.getElementById("orderForm").reset();
+
+});
+</script>
+
+</body>
+</html>
