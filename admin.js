@@ -1,3 +1,8 @@
+/**
+ * Aarush Ayurveda - Admin Dashboard Logic
+ * GitHub Pages Compatible
+ */
+
 const firebaseConfig = {
     apiKey: "AIzaSyBXVrbfucAyj9wud-sY2BaO2mLO8JaeeQE",
     authDomain: "ship-53cd8.firebaseapp.com",
@@ -11,161 +16,195 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-let ordersList = [];
+let allOrders = [];
 
-// Panel Switcher
-function showPanel(id) {
-    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    document.getElementById('panel-' + id).classList.add('active');
-}
-
-// Product Management
-function toggleProductModal(show) {
-    document.getElementById('product-modal').style.display = show ? 'block' : 'none';
-    if (!show) document.getElementById('product-form').reset();
-}
-
-document.getElementById('product-form').onsubmit = (e) => {
-    e.preventDefault();
-    const id = document.getElementById('edit-product-id').value;
-    const product = {
-        name: document.getElementById('prod-name').value,
-        price: Number(document.getElementById('prod-price').value),
-        image: document.getElementById('prod-image').value,
-        description: document.getElementById('prod-desc').value,
-        stock: Number(document.getElementById('prod-stock').value),
-        createdAt: new Date().toISOString()
-    };
-
-    if (id) {
-        db.ref('products/' + id).update(product);
-    } else {
-        db.ref('products').push(product);
-    }
-    toggleProductModal(false);
-};
-
-db.ref('products').on('value', snapshot => {
-    const list = document.getElementById('admin-product-list');
-    list.innerHTML = '';
-    const data = snapshot.val();
-    if (data) {
-        Object.keys(data).forEach(id => {
-            const p = data[id];
-            list.innerHTML += `
-                <tr>
-                    <td><img src="${p.image}" width="50"></td>
-                    <td>${p.name}</td>
-                    <td>₹${p.price}</td>
-                    <td>${p.stock}</td>
-                    <td>
-                        <button onclick="editProduct('${id}')"><i class="fas fa-edit"></i></button>
-                        <button onclick="deleteProduct('${id}')" class="text-red-500"><i class="fas fa-trash"></i></button>
-                    </td>
-                </tr>
-            `;
-        });
-    }
-});
-
-function editProduct(id) {
-    db.ref('products/' + id).once('value', snapshot => {
-        const p = snapshot.val();
-        document.getElementById('edit-product-id').value = id;
-        document.getElementById('prod-name').value = p.name;
-        document.getElementById('prod-price').value = p.price;
-        document.getElementById('prod-image').value = p.image;
-        document.getElementById('prod-desc').value = p.description;
-        document.getElementById('prod-stock').value = p.stock;
-        document.getElementById('product-modal-title').innerText = "Edit Product";
-        toggleProductModal(true);
-    });
-}
-
-function deleteProduct(id) {
-    if (confirm("Delete this product?")) db.ref('products/' + id).remove();
-}
-
-// Order Management
-db.ref('orders').on('value', snapshot => {
-    const list = document.getElementById('admin-order-list');
-    list.innerHTML = '';
-    const data = snapshot.val();
-    ordersList = [];
+// Tab Switcher
+function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
     
-    let total = 0, n = 0, s = 0;
+    document.getElementById('tab-' + tab).classList.add('active');
+    document.getElementById('section-' + tab).classList.remove('hidden');
+}
+
+// --- Order Management ---
+
+db.ref('orders').on('value', (snapshot) => {
+    const data = snapshot.val();
+    allOrders = [];
+    const rows = document.getElementById('order-rows');
+    rows.innerHTML = '';
+
+    let stats = { total: 0, new: 0, proc: 0, ship: 0 };
 
     if (data) {
         Object.keys(data).reverse().forEach(id => {
-            const o = data[id];
-            o.id = id;
-            ordersList.push(o);
+            const order = { id, ...data[id] };
+            allOrders.push(order);
             
-            total++;
-            if (o.status === "New") n++;
-            if (o.status === "Shipped") s++;
+            stats.total++;
+            if (order.status === 'New') stats.new++;
+            if (order.status === 'Processing') stats.proc++;
+            if (order.status === 'Shipped') stats.ship++;
 
-            list.innerHTML += `
-                <tr>
-                    <td>${o.time}</td>
-                    <td>
-                        <strong>${o.name}</strong><br>${o.phone}
-                        <br><a href="https://wa.me/91${o.phone}" target="_blank" class="text-green-600"><i class="fab fa-whatsapp"></i> Chat</a>
+            rows.innerHTML += `
+                <tr class="border-b hover:bg-stone-50 transition">
+                    <td class="p-4 text-xs font-medium text-gray-500">${order.time}</td>
+                    <td class="p-4">
+                        <div class="font-bold text-primary">${order.name}</div>
+                        <div class="text-xs text-stone-500">${order.phone} | ${order.email}</div>
+                        <div class="text-[10px] bg-gray-100 p-1 mt-1 rounded leading-tight">${order.address}</div>
                     </td>
-                    <td>${o.items.map(i => `${i.name} (x${i.quantity})`).join('<br>')}</td>
-                    <td>₹${o.total}</td>
-                    <td>
-                        <select onchange="updateOrderStatus('${id}', this.value)">
-                            <option value="New" ${o.status === 'New' ? 'selected' : ''}>New</option>
-                            <option value="Processing" ${o.status === 'Processing' ? 'selected' : ''}>Processing</option>
-                            <option value="Shipped" ${o.status === 'Shipped' ? 'selected' : ''}>Shipped</option>
-                            <option value="Delivered" ${o.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
-                            <option value="Cancelled" ${o.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+                    <td class="p-4 text-xs">
+                        ${order.items.map(i => `<div class="mb-1">${i.name} <span class="text-gold font-bold">× ${i.quantity}</span></div>`).join('')}
+                    </td>
+                    <td class="p-4 font-bold text-primary">₹${order.total}</td>
+                    <td class="p-4">
+                        <select onchange="updateStatus('${id}', this.value)" class="p-2 border rounded text-xs outline-none ${getStatusColor(order.status)}">
+                            <option value="New" ${order.status === 'New' ? 'selected' : ''}>New</option>
+                            <option value="Processing" ${order.status === 'Processing' ? 'selected' : ''}>Processing</option>
+                            <option value="Shipped" ${order.status === 'Shipped' ? 'selected' : ''}>Shipped</option>
+                            <option value="Delivered" ${order.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
+                            <option value="Cancelled" ${order.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
                         </select>
                     </td>
-                    <td>
-                        <button onclick="deleteOrder('${id}')"><i class="fas fa-trash"></i></button>
+                    <td class="p-4">
+                        <div class="flex items-center justify-center space-x-3">
+                            <a href="https://wa.me/91${order.phone.replace(/\D/g,'')}" target="_blank" class="text-green-500 hover:scale-110 transition"><i class="fa-brands fa-whatsapp text-lg"></i></a>
+                            <button onclick="deleteOrder('${id}')" class="text-red-400 hover:text-red-600 transition"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>
                     </td>
                 </tr>
             `;
         });
     }
-
-    document.getElementById('stat-total-orders').innerText = total;
-    document.getElementById('stat-new-orders').innerText = n;
-    document.getElementById('stat-shipped-orders').innerText = s;
+    
+    // Update Stats
+    document.getElementById('stat-total').innerText = stats.total;
+    document.getElementById('stat-new').innerText = stats.new;
+    document.getElementById('stat-proc').innerText = stats.proc;
+    document.getElementById('stat-ship').innerText = stats.ship;
 });
 
-function updateOrderStatus(id, status) {
-    db.ref(`orders/${id}`).update({ status });
+function getStatusColor(status) {
+    if (status === 'New') return 'bg-blue-50 text-blue-600';
+    if (status === 'Processing') return 'bg-yellow-50 text-yellow-600';
+    if (status === 'Shipped') return 'bg-green-50 text-green-600';
+    if (status === 'Delivered') return 'bg-stone-800 text-white';
+    return 'bg-red-50 text-red-600';
+}
+
+function updateStatus(id, status) {
+    db.ref('orders/' + id).update({ status });
 }
 
 function deleteOrder(id) {
-    if (confirm("Delete this order?")) db.ref('orders/' + id).remove();
+    if (confirm('Permanently delete this order?')) {
+        db.ref('orders/' + id).remove();
+    }
 }
 
-function searchOrders() {
-    const term = document.getElementById('orderSearch').value.toLowerCase();
-    const rows = document.querySelectorAll('#admin-order-list tr');
+function filterOrders() {
+    const val = document.getElementById('search-order').value.toLowerCase();
+    const rows = document.querySelectorAll('#order-rows tr');
     rows.forEach(row => {
-        row.style.display = row.innerText.toLowerCase().includes(term) ? '' : 'none';
+        row.style.display = row.innerText.toLowerCase().includes(val) ? '' : 'none';
     });
 }
 
-function exportOrdersToCSV() {
+function exportCSV() {
     let csv = "Date,Name,Phone,Email,Total,Status,Address\n";
-    ordersList.forEach(o => {
-        csv += `"${o.time}","${o.name}","${o.phone}","${o.email}","${o.total}","${o.status}","${o.address.replace(/"/g, '""')}"\n`;
+    allOrders.forEach(o => {
+        csv += `${o.time},${o.name},${o.phone},${o.email},${o.total},${o.status},"${o.address}"\n`;
     });
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.setAttribute('hidden', '');
-    a.setAttribute('href', url);
-    a.setAttribute('download', 'aarush_orders.csv');
-    document.body.appendChild(a);
+    a.href = url;
+    a.download = 'aarush_ayurveda_orders.csv';
     a.click();
-    document.body.removeChild(a);
 }
 
-showPanel('stats');
+// --- Product Management ---
+
+const productForm = document.getElementById('product-form');
+
+db.ref('products').on('value', snapshot => {
+    const data = snapshot.val();
+    const rows = document.getElementById('product-rows');
+    rows.innerHTML = '';
+
+    if (data) {
+        Object.keys(data).forEach(id => {
+            const p = data[id];
+            rows.innerHTML += `
+                <tr class="border-b hover:bg-stone-50 transition">
+                    <td class="p-4 flex items-center space-x-3">
+                        <img src="${p.image}" class="w-10 h-10 object-cover rounded">
+                        <div>
+                            <div class="font-bold text-primary text-sm">${p.name}</div>
+                            <div class="text-[10px] text-gray-400 truncate max-w-[150px]">${p.description}</div>
+                        </div>
+                    </td>
+                    <td class="p-4 font-bold text-primary text-sm">₹${p.price}</td>
+                    <td class="p-4 text-center">
+                        <span class="px-3 py-1 rounded-full text-xs font-bold ${p.stock > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
+                            ${p.stock}
+                        </span>
+                    </td>
+                    <td class="p-4">
+                        <div class="flex justify-center space-x-3 text-sm">
+                            <button onclick="editProduct('${id}')" class="text-blue-500 hover:scale-110 transition"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button onclick="deleteProduct('${id}')" class="text-red-500 hover:scale-110 transition"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+});
+
+productForm.onsubmit = (e) => {
+    e.preventDefault();
+    const id = document.getElementById('edit-id').value;
+    const prodData = {
+        name: document.getElementById('prod-name').value,
+        price: parseInt(document.getElementById('prod-price').value),
+        image: document.getElementById('prod-img').value,
+        stock: parseInt(document.getElementById('prod-stock').value),
+        description: document.getElementById('prod-desc').value,
+        createdAt: new Date().getTime()
+    };
+
+    if (id) {
+        db.ref('products/' + id).update(prodData);
+    } else {
+        db.ref('products').push(prodData);
+    }
+    resetProdForm();
+};
+
+function editProduct(id) {
+    db.ref('products/' + id).once('value', snapshot => {
+        const p = snapshot.val();
+        document.getElementById('edit-id').value = id;
+        document.getElementById('prod-name').value = p.name;
+        document.getElementById('prod-price').value = p.price;
+        document.getElementById('prod-img').value = p.image;
+        document.getElementById('prod-stock').value = p.stock;
+        document.getElementById('prod-desc').value = p.description;
+        document.getElementById('form-title').innerText = "Edit Product";
+        document.getElementById('prod-submit').innerText = "Update Product";
+    });
+}
+
+function deleteProduct(id) {
+    if (confirm('Delete product?')) db.ref('products/' + id).remove();
+}
+
+function resetProdForm() {
+    productForm.reset();
+    document.getElementById('edit-id').value = '';
+    document.getElementById('form-title').innerText = "Add New Product";
+    document.getElementById('prod-submit').innerText = "Save Product";
+}
