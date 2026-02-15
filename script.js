@@ -9,185 +9,174 @@ const firebaseConfig = {
     appId: "1:682363394250:web:705c36de45058f4a26bc33"
 };
 
-// Init Firebase
-firebase.initializeApp(firebaseConfig);
-const database = firebase.database();
-
-// State
-let cart = JSON.parse(localStorage.getItem('aarush_luxury_cart')) || [];
-let products = [];
-
 // Initialize
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+let products = [];
+let cart = JSON.parse(localStorage.getItem('aarush_cart')) || [];
+
+// Core Initialization
 document.addEventListener('DOMContentLoaded', () => {
     fetchProducts();
     updateCartUI();
 });
 
-// Fetch Products
+// Fetch Products from Firebase
 function fetchProducts() {
-    const grid = document.getElementById('product-grid');
-    database.ref('products').on('value', (snapshot) => {
-        const data = snapshot.val();
+    const list = document.getElementById('product-list');
+    db.ref('products').on('value', (snapshot) => {
         products = [];
-        grid.innerHTML = '';
+        list.innerHTML = '';
+        const data = snapshot.val();
+        
         if (data) {
             Object.keys(data).forEach(id => {
                 const p = data[id];
                 p.id = id;
                 products.push(p);
-                renderProduct(p);
+                
+                const isOutOfStock = p.stock <= 0;
+                const isLowStock = p.stock > 0 && p.stock < 5;
+                
+                list.innerHTML += `
+                    <div class="p-card bg-white rounded-[30px] overflow-hidden border border-stone-100 flex flex-col h-full group">
+                        <div class="relative overflow-hidden aspect-[4/5]">
+                            <img src="${p.image}" alt="${p.name}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                            ${isOutOfStock ? '<div class="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-[10px] uppercase tracking-widest font-bold">Sold Out</div>' : ''}
+                            ${isLowStock ? '<div class="absolute top-4 left-4 bg-orange-500 text-white text-[8px] font-bold uppercase tracking-widest px-3 py-1 rounded-full">Limited Supply</div>' : ''}
+                        </div>
+                        <div class="p-8 flex flex-col flex-1">
+                            <h3 class="text-xl font-bold text-primary font-['Playfair_Display'] mb-2">${p.name}</h3>
+                            <p class="text-stone-400 text-xs mb-6 flex-1 leading-relaxed">${p.description}</p>
+                            <div class="flex items-center justify-between mt-auto">
+                                <span class="text-xl font-bold text-gold font-['Playfair_Display']">₹${p.price}</span>
+                                <button onclick="addToCart('${p.id}')" ${isOutOfStock ? 'disabled' : ''} 
+                                    class="bg-primary text-gold p-4 rounded-2xl hover:bg-gold hover:text-primary transition-all disabled:opacity-20">
+                                    <i class="fa-solid fa-cart-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
             });
         } else {
-            grid.innerHTML = '<div class="col-span-4 text-center py-20 opacity-50">Our vault is being restocked...</div>';
+            list.innerHTML = `<div class="col-span-full text-center py-20 opacity-50 italic">The inventory is currently being replenished...</div>`;
         }
     });
-}
-
-function renderProduct(p) {
-    const isOutOfStock = p.stock <= 0;
-    const isLowStock = p.stock > 0 && p.stock <= 5;
-    const grid = document.getElementById('product-grid');
-    
-    const card = `
-        <div class="product-card group" data-aos="fade-up">
-            <div class="relative overflow-hidden rounded-[30px] aspect-[4/5] bg-gray-100">
-                <img src="${p.image}" alt="${p.name}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
-                <div class="img-overlay absolute inset-0 flex items-center justify-center">
-                    ${!isOutOfStock ? `
-                        <button onclick="addToCart('${p.id}')" class="bg-white text-luxuryGreen font-bold px-8 py-3 rounded-full uppercase tracking-widest text-xs transform translate-y-10 group-hover:translate-y-0 transition-all duration-500 shadow-2xl">
-                            Add to Bag
-                        </button>
-                    ` : ''}
-                </div>
-                ${isOutOfStock ? '<div class="absolute top-6 left-6 bg-black text-white text-[10px] font-bold px-4 py-1 rounded-full uppercase tracking-widest">Out of Stock</div>' : ''}
-                ${isLowStock ? '<div class="absolute top-6 left-6 bg-red-600 text-white text-[10px] font-bold px-4 py-1 rounded-full uppercase tracking-widest">Limited Supply</div>' : ''}
-            </div>
-            <div class="mt-8 text-center">
-                <h3 class="text-xl font-['Playfair_Display'] font-bold mb-2">${p.name}</h3>
-                <p class="text-gold font-bold tracking-widest text-sm">₹${p.price.toLocaleString()}</p>
-            </div>
-        </div>
-    `;
-    grid.innerHTML += card;
 }
 
 // Cart Logic
 function toggleCart() {
-    const drawer = document.getElementById('cart-drawer');
-    const overlay = document.getElementById('cart-overlay');
-    const content = document.getElementById('cart-content');
-    
-    if (drawer.classList.contains('invisible')) {
-        drawer.classList.remove('invisible');
-        setTimeout(() => {
-            overlay.classList.add('opacity-100');
-            content.classList.remove('translate-x-full');
-        }, 10);
-    } else {
-        overlay.classList.remove('opacity-100');
-        content.classList.add('translate-x-full');
-        setTimeout(() => drawer.classList.add('invisible'), 500);
-    }
+    document.getElementById('cart-drawer').classList.toggle('active');
 }
 
 function addToCart(id) {
-    const product = products.find(p => p.id === id);
-    if (product.stock <= 0) return;
-
+    const p = products.find(prod => prod.id === id);
     const existing = cart.find(item => item.id === id);
+
     if (existing) {
-        if (existing.qty < product.stock) {
-            existing.qty++;
-        } else {
-            alert('This is the last available unit of this rare formulation.');
-        }
+        if (existing.quantity < p.stock) existing.quantity++;
+        else return alert("Maximum available stock reached.");
     } else {
-        cart.push({ ...product, qty: 1 });
+        cart.push({ ...p, quantity: 1 });
     }
-    updateCartUI();
-    toggleCart();
+    saveCart();
+    if (!document.getElementById('cart-drawer').classList.contains('active')) toggleCart();
 }
 
 function updateQty(id, delta) {
     const item = cart.find(i => i.id === id);
-    const product = products.find(p => p.id === id);
+    const p = products.find(prod => prod.id === id);
     
-    if (delta > 0 && item.qty >= product.stock) return;
-    
-    item.qty += delta;
-    if (item.qty <= 0) {
-        cart = cart.filter(i => i.id !== id);
+    if (item) {
+        if (delta > 0 && item.quantity >= p.stock) return alert("Insufficient stock.");
+        item.quantity += delta;
+        if (item.quantity <= 0) cart = cart.filter(i => i.id !== id);
     }
+    saveCart();
+}
+
+function removeItem(id) {
+    cart = cart.filter(i => i.id !== id);
+    saveCart();
+}
+
+function saveCart() {
+    localStorage.setItem('aarush_cart', JSON.stringify(cart));
     updateCartUI();
 }
 
 function updateCartUI() {
-    localStorage.setItem('aarush_luxury_cart', JSON.stringify(cart));
     const list = document.getElementById('cart-items');
-    const countEl = document.getElementById('cart-count');
     const totalEl = document.getElementById('cart-total');
+    const countEl = document.getElementById('cart-count');
     
-    countEl.innerText = cart.reduce((acc, i) => acc + i.qty, 0);
-    let total = 0;
     list.innerHTML = '';
-    
+    let total = 0;
+    let count = 0;
+
     cart.forEach(item => {
-        total += item.price * item.qty;
+        total += item.price * item.quantity;
+        count += item.quantity;
         list.innerHTML += `
-            <div class="flex gap-6 items-center border-b border-gray-100 pb-6">
-                <img src="${item.image}" class="w-20 h-20 object-cover rounded-2xl">
+            <div class="flex items-center gap-5 border-b border-stone-100 pb-5">
+                <img src="${item.image}" class="w-16 h-16 object-cover rounded-xl shadow-sm">
                 <div class="flex-1">
-                    <h4 class="font-['Playfair_Display'] font-bold text-sm mb-1">${item.name}</h4>
-                    <p class="text-gold text-xs font-bold mb-3">₹${item.price.toLocaleString()}</p>
-                    <div class="flex items-center gap-4">
-                        <button onclick="updateQty('${item.id}', -1)" class="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gold hover:text-white transition-all">-</button>
-                        <span class="text-xs font-bold">${item.qty}</span>
-                        <button onclick="updateQty('${item.id}', 1)" class="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gold hover:text-white transition-all">+</button>
+                    <h4 class="font-bold text-sm text-primary leading-tight mb-1">${item.name}</h4>
+                    <p class="text-gold font-bold text-xs mb-2">₹${item.price}</p>
+                    <div class="flex items-center space-x-3">
+                        <button onclick="updateQty('${item.id}', -1)" class="w-6 h-6 border rounded-lg flex items-center justify-center hover:bg-stone-50">-</button>
+                        <span class="text-xs font-bold">${item.quantity}</span>
+                        <button onclick="updateQty('${item.id}', 1)" class="w-6 h-6 border rounded-lg flex items-center justify-center hover:bg-stone-50">+</button>
                     </div>
                 </div>
+                <button onclick="removeItem('${item.id}')" class="text-stone-300 hover:text-red-500 transition"><i class="fa-solid fa-trash-can"></i></button>
             </div>
         `;
     });
+
+    if (cart.length === 0) list.innerHTML = `<p class="text-center py-20 text-stone-300 italic">Your bag is as light as air...</p>`;
     
-    totalEl.innerText = `₹${total.toLocaleString()}`;
-    if (cart.length === 0) {
-        list.innerHTML = '<div class="text-center py-20 opacity-30 text-sm tracking-widest">YOUR SELECTION IS EMPTY</div>';
-    }
+    totalEl.innerText = `₹${total}`;
+    countEl.innerText = count;
 }
 
-// Checkout
+// Checkout Flow
 function showCheckout() {
-    if (cart.length === 0) return alert('Your selection bag is empty.');
+    if (cart.length === 0) return alert("Select your treasures first.");
     toggleCart();
     document.getElementById('checkout-modal').classList.remove('hidden');
-    
-    const summary = document.getElementById('checkout-summary');
-    let total = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
-    summary.innerHTML = `
-        <div class="flex justify-between font-bold text-gray-400 uppercase tracking-widest mb-4">
-            <span>Items Bag</span>
-            <span>Subtotal</span>
-        </div>
-        ${cart.map(i => `<div class="flex justify-between mb-2"><span>${i.name} (x${i.qty})</span><span>₹${(i.price * i.qty).toLocaleString()}</span></div>`).join('')}
-        <div class="border-t border-gray-200 mt-4 pt-4 flex justify-between text-lg font-bold text-luxuryGreen">
-            <span>TOTAL</span>
-            <span class="text-gold">₹${total.toLocaleString()}</span>
-        </div>
-    `;
+    renderSummary();
 }
 
 function hideCheckout() {
     document.getElementById('checkout-modal').classList.add('hidden');
 }
 
-document.getElementById('order-form').addEventListener('submit', async (e) => {
+function renderSummary() {
+    const box = document.getElementById('checkout-summary');
+    let total = cart.reduce((acc, i) => acc + (i.price * i.quantity), 0);
+    box.innerHTML = `
+        <div class="font-bold text-primary text-xs uppercase tracking-widest mb-4">Summary</div>
+        ${cart.map(i => `<div class="flex justify-between"><span>${i.name} (x${i.quantity})</span><span>₹${i.price * i.quantity}</span></div>`).join('')}
+        <div class="border-t border-gold/10 pt-4 mt-2 flex justify-between font-bold text-primary text-lg">
+            <span>Payable</span><span>₹${total}</span>
+        </div>
+    `;
+}
+
+// Order Submission
+document.getElementById('order-form').onsubmit = async (e) => {
     e.preventDefault();
-    const btn = document.getElementById('place-order-btn');
+    const btn = document.getElementById('submit-btn');
+    const loader = document.getElementById('loader');
+    
     btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> AUTHORIZING...';
+    loader.classList.remove('hidden');
 
     const orderId = 'AA-' + Math.random().toString(36).substr(2, 9).toUpperCase();
-    const total = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
+    const total = cart.reduce((acc, i) => acc + (i.price * i.quantity), 0);
     
     const orderData = {
         orderId,
@@ -195,82 +184,50 @@ document.getElementById('order-form').addEventListener('submit', async (e) => {
         phone: document.getElementById('cust-phone').value,
         email: document.getElementById('cust-email').value,
         address: document.getElementById('cust-address').value,
-        items: cart.map(i => ({ name: i.name, qty: i.qty, price: i.price })),
-        total,
+        items: cart.map(i => ({ name: i.name, quantity: i.quantity, price: i.price })),
+        total: total,
         paymentMethod: document.querySelector('input[name="payment"]:checked').value,
         status: "New",
         time: new Date().toLocaleString()
     };
 
     try {
-        // Save Order
-        await database.ref('orders').push(orderData);
+        // 1. Save to Firebase
+        await db.ref('orders').push(orderData);
 
-        // Update Stock
+        // 2. Reduce Stock
         for (const item of cart) {
-            const product = products.find(p => p.id === item.id);
-            const newStock = product.stock - item.qty;
-            await database.ref('products/' + item.id).update({ stock: newStock });
+            const pRef = db.ref('products/' + item.id);
+            const snapshot = await pRef.once('value');
+            const currentStock = snapshot.val().stock;
+            await pRef.update({ stock: Math.max(0, currentStock - item.quantity) });
         }
 
-        // Telegram Alert
+        // 3. Telegram Alert
         await sendTelegram(orderData);
 
-        // Success
-        cart = [];
-        updateCartUI();
-        hideCheckout();
-        document.getElementById('order-form').reset();
-        
+        // 4. Success Handling
+        document.getElementById('success-oid').innerText = orderId;
         document.getElementById('success-modal').classList.remove('hidden');
-        document.getElementById('success-msg').innerText = `Your order ${orderId} has been successfully authorized for premium dispatch.`;
-        setTimeout(() => document.getElementById('success-card').classList.add('show'), 100);
-
+        cart = [];
+        saveCart();
     } catch (err) {
-        console.error(err);
-        alert('Authorization failed. Please contact your premium concierge.');
+        alert("Authorization failed. Please contact heritage support.");
     } finally {
         btn.disabled = false;
-        btn.innerHTML = 'PLACE YOUR ORDER <i class="fa-solid fa-arrow-right"></i>';
+        loader.classList.add('hidden');
     }
-});
-
-function closeSuccess() {
-    document.getElementById('success-card').classList.remove('show');
-    setTimeout(() => document.getElementById('success-modal').classList.add('hidden'), 500);
-}
+};
 
 async function sendTelegram(order) {
-    const BOT_TOKEN = "8519947258:AAGJzcVNkJXGndbc1O9C2e_rNgQWAleNhFY";
-    const CHAT_ID = "6820660513";
-    
-    let itemsText = order.items.map(i => `• ${i.name} (x${i.qty})`).join('\n');
-    
-    const message = `
-🌟 *NEW PREMIUM ORDER: ${order.orderId}*
----------------------------------------
-👤 *Customer:* ${order.name}
-📞 *Phone:* ${order.phone}
-📧 *Email:* ${order.email}
-📍 *Address:* ${order.address}
+    const bot = "8519947258:AAGJzcVNkJXGndbc1O9C2e_rNgQWAleNhFY";
+    const chat = "6820660513";
+    const itemsText = order.items.map(i => `${i.name} (x${i.quantity})`).join('\n');
+    const msg = `🌿 *New Order Confirmed: ${order.orderId}*\n\n👤 *Customer:* ${order.name}\n📞 *Phone:* ${order.phone}\n📍 *Address:* ${order.address}\n\n📦 *Items:*\n${itemsText}\n\n💰 *Total:* ₹${order.total}\n💳 *Payment:* ${order.paymentMethod}`;
 
-📦 *Items Ordered:*
-${itemsText}
-
-💰 *Total Amount:* ₹${order.total.toLocaleString()}
-💳 *Method:* ${order.paymentMethod}
-⏰ *Time:* ${order.time}
----------------------------------------
-Aarush Ayurveda Elite Dashboard
-    `;
-
-    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+    await fetch(`https://api.telegram.org/bot${bot}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            chat_id: CHAT_ID,
-            text: message,
-            parse_mode: 'Markdown'
-        })
+        body: JSON.stringify({ chat_id: chat, text: msg, parse_mode: 'Markdown' })
     });
 }
